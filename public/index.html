@@ -136,6 +136,23 @@ let currentPhase = 'idle';
 let currentProfile = { ...PROFILES.sleeping };
 let targetProfile = PROFILES.sleeping;
 
+// ── Heartbeat Monitor ───────────────────────────────
+const HEARTBEAT_LEN = 200;
+let heartbeat = new Array(HEARTBEAT_LEN).fill(0);
+let hbPhase = 0;
+let hbPulseTimer = 0;
+
+// Heartbeat profiles (pulse interval in frames, amplitude, noise)
+const HB_PROFILES = {
+  sleeping:  { interval: 90, amp: 0.3, noise: 0.02, speed: 0.5 },
+  idle:      { interval: 50, amp: 0.5, noise: 0.05, speed: 1.0 },
+  focused:   { interval: 35, amp: 0.7, noise: 0.03, speed: 1.2 },
+  happy:     { interval: 40, amp: 0.6, noise: 0.08, speed: 1.1 },
+  excited:   { interval: 20, amp: 1.0, noise: 0.1,  speed: 1.8 },
+  stressed:  { interval: 25, amp: 0.9, noise: 0.2,  speed: 1.5 },
+  tired:     { interval: 70, amp: 0.4, noise: 0.04, speed: 0.7 },
+};
+
 // ── Canvas ──────────────────────────────────────────
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
@@ -165,7 +182,7 @@ function draw() {
   // BIGGER face — use more of the screen
   const scale = Math.min(W, H) / 140;
   const cx = W / 2;
-  const cy = H / 2;
+  const cy = H * 0.42; // slightly above center to make room for stats
 
   const p = currentProfile;
 
@@ -247,6 +264,74 @@ function draw() {
     }
     ctx.globalAlpha = 1;
   }
+
+  // ── Heartbeat Monitor (bottom) ──
+  const hbY = H * 0.82;           // heartbeat line Y position
+  const hbH = H * 0.06;           // heartbeat height range
+  const hbLeft = W * 0.15;
+  const hbRight = W * 0.85;
+  const hbWidth = hbRight - hbLeft;
+  const step = hbWidth / HEARTBEAT_LEN;
+
+  // Draw heartbeat line
+  ctx.strokeStyle = EYE_COLOR;
+  ctx.globalAlpha = 0.25;
+  ctx.lineWidth = Math.max(1.5, scale * 0.4);
+  ctx.beginPath();
+  for (let i = 0; i < heartbeat.length; i++) {
+    const x = hbLeft + i * step;
+    const y = hbY - heartbeat[i] * hbH;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Glow on recent pulse (last 20 samples brighter)
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = Math.max(2, scale * 0.6);
+  ctx.beginPath();
+  const glowStart = Math.max(0, heartbeat.length - 25);
+  for (let i = glowStart; i < heartbeat.length; i++) {
+    const x = hbLeft + i * step;
+    const y = hbY - heartbeat[i] * hbH;
+    if (i === glowStart) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // ── Stats Text (below heartbeat) ──
+  const statsY = H * 0.9;
+  const fontSize = Math.max(10, Math.round(scale * 2.5));
+
+  ctx.font = `${fontSize}px monospace`;
+  ctx.fillStyle = EYE_COLOR;
+  ctx.globalAlpha = 0.3;
+  ctx.textAlign = 'center';
+
+  // Emotion label + task
+  const emotionLabel = emotion.toUpperCase();
+  const displayTask = task.length > 40 ? task.slice(0, 37) + '...' : task;
+  ctx.fillText(`[ ${emotionLabel} ]  ${displayTask}`, cx, statsY);
+
+  // Energy dots
+  const dotCount = 10;
+  const filledDots = Math.round(energy / 10);
+  const dotSize = Math.max(2, scale * 0.6);
+  const dotGap = dotSize * 2.5;
+  const dotsStartX = cx - (dotCount * dotGap) / 2;
+  const dotsY = statsY + fontSize * 1.2;
+
+  for (let i = 0; i < dotCount; i++) {
+    ctx.globalAlpha = i < filledDots ? 0.35 : 0.1;
+    ctx.fillRect(
+      dotsStartX + i * dotGap,
+      dotsY,
+      dotSize, dotSize
+    );
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'start';
 }
 
 // ── Animation Logic ─────────────────────────────────
@@ -299,6 +384,25 @@ function updateAnimation() {
   if (openness < 0.2 && targetMouth > 0.5) {
     targetMouth = 0;
   }
+
+  // ── Heartbeat generation ──
+  const hbp = HB_PROFILES[emotion] || HB_PROFILES.idle;
+  hbPulseTimer++;
+
+  let val = 0;
+  // EKG-style pulse
+  if (hbPulseTimer % Math.round(hbp.interval) < 4) {
+    const t = hbPulseTimer % Math.round(hbp.interval);
+    if (t === 0) val = hbp.amp * 0.3;
+    else if (t === 1) val = hbp.amp * 1.0;  // peak
+    else if (t === 2) val = hbp.amp * -0.4; // dip
+    else if (t === 3) val = hbp.amp * 0.1;
+  }
+  // Add noise
+  val += (Math.random() - 0.5) * hbp.noise;
+
+  heartbeat.push(val);
+  if (heartbeat.length > HEARTBEAT_LEN) heartbeat.shift();
 }
 
 function scheduleNext() {
