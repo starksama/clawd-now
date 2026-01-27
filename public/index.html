@@ -424,8 +424,8 @@ function updateAnimation() {
     targetBpm = st.bpm[0] + Math.random() * (st.bpm[1] - st.bpm[0]);
     targetHype = st.hype[0] + Math.random() * (st.hype[1] - st.hype[0]);
   }
-  displayBpm = lerp(displayBpm, targetBpm, 0.08);
-  displayHype = lerp(displayHype, targetHype, 0.08);
+  displayBpm = lerp(displayBpm, targetBpm, 0.012);   // ~5s to settle — like a real monitor
+  displayHype = lerp(displayHype, targetHype, 0.02);  // ~3s to settle
 }
 
 function scheduleNext() {
