@@ -9,81 +9,192 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
     }
 
     body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #FFB3BA 0%, #FFCCCF 50%, #FFD1DC 100%);
-      min-height: 100vh;
+      width: 100vw;
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       overflow: hidden;
+      transition: background-color 0.8s ease;
+    }
+
+    /* Emotion color mapping */
+    body.focused {
+      background-color: #E8937C;
+    }
+
+    body.happy {
+      background-color: #F0A896;
+    }
+
+    body.excited {
+      background-color: #E8754A;
+    }
+
+    body.stressed {
+      background-color: #D97546;
+    }
+
+    body.tired {
+      background-color: #D9B5A8;
+    }
+
+    body.sleeping {
+      background-color: #E8C9C0;
+    }
+
+    .face {
       position: relative;
+      width: 100vmin;
+      height: 100vmin;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    /* Full-screen canvas for pixel art bot */
-    canvas {
-      display: block;
-      max-width: 100vw;
-      max-height: 100vh;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
+    /* Eyes container */
+    .eyes {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20vmin;
+      z-index: 10;
     }
 
-    /* Task info - floating at bottom */
+    /* Single eye */
+    .eye {
+      width: 10vmin;
+      height: 6vmin;
+      background-color: #3D2817;
+      border-radius: 15%;
+      animation: blink 3s ease-in-out infinite;
+    }
+
+    .eye:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    @keyframes blink {
+      0%, 10%, 15%, 100% {
+        transform: scaleY(1);
+      }
+      12% {
+        transform: scaleY(0.05);
+      }
+    }
+
+    /* Eyes look around slightly */
+    @keyframes lookAround {
+      0%, 100% {
+        transform: translateX(0);
+      }
+      50% {
+        transform: translateX(1vmin);
+      }
+    }
+
+    .eye {
+      animation: blink 3s ease-in-out infinite, lookAround 4s ease-in-out infinite;
+    }
+
+    /* Mouth */
+    .mouth {
+      position: absolute;
+      bottom: 35%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6vmin;
+      height: 3vmin;
+      background-color: #3D2817;
+      border-radius: 10%;
+      transition: transform 0.3s ease;
+    }
+
+    /* Emotion states for mouth */
+    body.happy .mouth {
+      border-radius: 50% 50% 30% 30%;
+    }
+
+    body.excited .mouth {
+      height: 4vmin;
+      animation: excitedPulse 0.5s ease-in-out infinite;
+    }
+
+    body.stressed .mouth {
+      transform: translateX(-50%) rotate(15deg);
+    }
+
+    body.sleeping .mouth {
+      height: 1.5vmin;
+      opacity: 0.5;
+    }
+
+    @keyframes excitedPulse {
+      0%, 100% {
+        transform: translateX(-50%) scale(1);
+      }
+      50% {
+        transform: translateX(-50%) scale(1.2, 0.8);
+      }
+    }
+
+    /* Info panel - hover to see */
     .info {
       position: fixed;
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.7);
       backdrop-filter: blur(10px);
-      border-radius: 15px;
-      padding: 12px 25px;
+      border-radius: 12px;
+      padding: 10px 20px;
       text-align: center;
-      font-size: 13px;
+      font-size: 12px;
       color: #333;
       opacity: 0;
       transition: opacity 0.3s ease;
       pointer-events: none;
       z-index: 10;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     body:hover .info {
       opacity: 1;
     }
 
-    .task-text {
+    .task {
       font-weight: 600;
       margin-bottom: 5px;
     }
 
     .energy-bar {
-      width: 100px;
-      height: 3px;
+      width: 80px;
+      height: 2px;
       background: rgba(0, 0, 0, 0.1);
-      border-radius: 2px;
+      border-radius: 1px;
       overflow: hidden;
+      margin: 0 auto;
     }
 
     .energy-fill {
       height: 100%;
-      background: linear-gradient(90deg, #FFB3BA, #FF9A9E);
+      background: #3D2817;
       transition: width 0.3s ease;
     }
 
-    /* Buttons - float above info */
+    /* Buttons - hover */
     .buttons {
       position: fixed;
-      bottom: 100px;
+      bottom: 80px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 10px;
+      gap: 8px;
       opacity: 0;
       pointer-events: none;
       transition: all 0.3s ease;
@@ -93,23 +204,23 @@
     body:hover .buttons {
       opacity: 1;
       pointer-events: auto;
-      bottom: 110px;
+      bottom: 90px;
     }
 
     button {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: none;
       background: white;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 16px;
       transition: all 0.2s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     button:hover {
-      transform: scale(1.2);
+      transform: scale(1.15);
     }
 
     button:active {
@@ -119,10 +230,10 @@
     /* Particles */
     .particle {
       position: fixed;
-      font-size: 30px;
       pointer-events: none;
       animation: float-up 1.5s ease-out forwards;
       z-index: 100;
+      font-size: 28px;
     }
 
     @keyframes float-up {
@@ -132,13 +243,19 @@
       }
       100% {
         opacity: 0;
-        transform: translateY(-100px) translateX(var(--tx, 0px)) scale(0.5);
+        transform: translateY(-120px) translateX(var(--tx, 0px)) scale(0.3);
       }
     }
   </style>
 </head>
-<body>
-  <canvas id="canvas"></canvas>
+<body class="focused">
+  <div class="face">
+    <div class="eyes">
+      <div class="eye"></div>
+      <div class="eye"></div>
+    </div>
+    <div class="mouth"></div>
+  </div>
 
   <div class="buttons">
     <button onclick="interact('pat')" title="Pat">👋</button>
@@ -147,185 +264,21 @@
   </div>
 
   <div class="info">
-    <div class="task-text" id="task">Just existing...</div>
+    <div class="task" id="task">Just existing...</div>
     <div class="energy-bar">
-      <div class="energy-fill" id="energy-fill" style="width: 100%"></div>
+      <div class="energy-fill" id="energy-fill"></div>
     </div>
   </div>
 
   <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-
-    // Canvas setup
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // Pixel art bot
-    const bot = {
-      x: 0,
-      y: 0,
-      scale: 4, // Pixel scale
-      emotion: 'focused',
-      task: 'Just existing...',
-      energy: 100,
-      idleTime: 0,
-      bobAmount: 0,
-      eyeBlink: 0,
-      mouthFrame: 0,
+    const emotionColors = {
+      focused: '#E8937C',
+      happy: '#F0A896',
+      excited: '#E8754A',
+      stressed: '#D97546',
+      tired: '#D9B5A8',
+      sleeping: '#E8C9C0',
     };
-
-    // Pixel palette
-    const colors = {
-      skin: '#FFD1DC',
-      head: '#FFB3BA',
-      dark: '#333333',
-      white: '#FFFFFF',
-      blush: '#FF9A9E',
-    };
-
-    function drawPixel(x, y, size, color) {
-      ctx.fillStyle = color;
-      ctx.fillRect(x, y, size, size);
-    }
-
-    function drawBot(centerX, centerY) {
-      const scale = bot.scale;
-      const bobY = Math.sin(bot.idleTime * 0.05) * 8;
-      const y = centerY + bobY;
-
-      // Head (main circle-ish shape in pixel art)
-      const headWidth = 60;
-      const headHeight = 70;
-      ctx.fillStyle = colors.head;
-      ctx.beginPath();
-      ctx.ellipse(centerX, y - 20, headWidth, headHeight, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Blush
-      ctx.fillStyle = colors.blush;
-      ctx.fillRect(centerX - 80, y + 10, 20, 15);
-      ctx.fillRect(centerX + 60, y + 10, 20, 15);
-
-      // LEFT EYE
-      if (bot.eyeBlink < 5) {
-        ctx.fillStyle = colors.dark;
-        ctx.fillRect(centerX - 35, y - 25, 20, 20); // sclera
-        // Pupil with look direction
-        const lookOffset = Math.sin(bot.idleTime * 0.03) * 5;
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(centerX - 32, y - 22, 12, 12);
-        ctx.fillStyle = colors.dark;
-        ctx.fillRect(centerX - 30 + lookOffset, y - 20 + lookOffset, 6, 6);
-      } else {
-        // Closed eye (cute line)
-        ctx.fillStyle = colors.dark;
-        ctx.fillRect(centerX - 35, y - 20, 20, 4);
-      }
-
-      // RIGHT EYE
-      if (bot.eyeBlink < 5) {
-        ctx.fillStyle = colors.dark;
-        ctx.fillRect(centerX + 15, y - 25, 20, 20); // sclera
-        // Pupil
-        const lookOffset = Math.sin(bot.idleTime * 0.03) * 5;
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(centerX + 18, y - 22, 12, 12);
-        ctx.fillStyle = colors.dark;
-        ctx.fillRect(centerX + 20 + lookOffset, y - 20 + lookOffset, 6, 6);
-      } else {
-        // Closed eye
-        ctx.fillStyle = colors.dark;
-        ctx.fillRect(centerX + 15, y - 20, 20, 4);
-      }
-
-      // MOUTH - changes with emotion
-      const mouthY = y + 30;
-      ctx.fillStyle = colors.dark;
-
-      if (bot.emotion === 'happy' || bot.emotion === 'excited') {
-        // Happy smile
-        ctx.fillRect(centerX - 15, mouthY, 30, 4); // Mouth line
-        ctx.fillRect(centerX - 18, mouthY + 2, 3, 3); // Left corner
-        ctx.fillRect(centerX + 15, mouthY + 2, 3, 3); // Right corner
-      } else if (bot.emotion === 'stressed') {
-        // Worried line
-        ctx.fillRect(centerX - 18, mouthY, 36, 3);
-      } else if (bot.emotion === 'tired' || bot.emotion === 'sleeping') {
-        // Closed/tired
-        ctx.fillRect(centerX - 15, mouthY + 5, 30, 2);
-      } else {
-        // Neutral smile (focused)
-        ctx.fillRect(centerX - 12, mouthY + 3, 24, 2);
-      }
-
-      // BODY
-      ctx.fillStyle = colors.head;
-      ctx.fillRect(centerX - 35, y + 40, 70, 50); // Torso
-
-      // ARMS (idle movement)
-      const armBobLeft = Math.sin(bot.idleTime * 0.04) * 10;
-      const armBobRight = Math.sin(bot.idleTime * 0.04 + 1) * 10;
-
-      ctx.fillStyle = colors.head;
-      // Left arm
-      ctx.fillRect(centerX - 50, y + 50 + armBobLeft, 15, 30);
-      // Right arm
-      ctx.fillRect(centerX + 35, y + 50 + armBobRight, 15, 30);
-
-      // LEGS
-      ctx.fillStyle = colors.head;
-      ctx.fillRect(centerX - 22, y + 85, 18, 30); // Left leg
-      ctx.fillRect(centerX + 4, y + 85, 18, 30);   // Right leg
-    }
-
-    function updateEmotion() {
-      if (bot.emotion === 'happy') {
-        return 'radial-gradient(135deg, #FFD1DC 0%, #FFCCCF 100%)';
-      } else if (bot.emotion === 'excited') {
-        return 'linear-gradient(135deg, #FF9A9E 0%, #FFB3BA 100%)';
-      } else if (bot.emotion === 'stressed') {
-        return 'linear-gradient(135deg, #FFB3BA 0%, #FFA5AB 100%)';
-      } else if (bot.emotion === 'tired') {
-        return 'linear-gradient(135deg, #FFD1DC 0%, #E8B4C0 100%)';
-      } else if (bot.emotion === 'sleeping') {
-        return 'linear-gradient(135deg, #FFE0E6 0%, #FFD1DC 100%)';
-      }
-      return 'linear-gradient(135deg, #FFB3BA 0%, #FFCCCF 100%)';
-    }
-
-    function animate() {
-      // Update background color based on emotion
-      document.body.style.background = updateEmotion();
-
-      // Clear canvas
-      ctx.fillStyle = '#FFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw bot in center
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2 - 20;
-
-      drawBot(centerX, centerY);
-
-      // Update animation counters
-      bot.idleTime++;
-      bot.eyeBlink++;
-      if (bot.eyeBlink > 60) bot.eyeBlink = 0;
-
-      // Occasional blinks
-      if (bot.eyeBlink > 55) {
-        // eyes are closed
-      }
-
-      requestAnimationFrame(animate);
-    }
-
-    animate();
 
     // WebSocket
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -342,10 +295,10 @@
     };
 
     function updateStatus(status) {
-      bot.emotion = status.emotion;
-      bot.task = status.task;
-      bot.energy = status.energy;
+      // Update emotion class
+      document.body.className = status.emotion;
 
+      // Update info
       document.getElementById('task').textContent = status.task;
       document.getElementById('energy-fill').style.width = `${status.energy}%`;
     }
@@ -366,7 +319,7 @@
       particle.textContent = emoji;
       particle.style.left = (Math.random() * 80 + 10) + '%';
       particle.style.top = (Math.random() * 60 + 20) + '%';
-      particle.style.setProperty('--tx', (Math.random() - 0.5) * 80 + 'px');
+      particle.style.setProperty('--tx', (Math.random() - 0.5) * 100 + 'px');
       document.body.appendChild(particle);
 
       setTimeout(() => particle.remove(), 1500);
