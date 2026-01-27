@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🤖 Stark</title>
+  <title>Stark</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 50%, #FFD1DC 100%);
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #FFB3BA 0%, #FFCCCF 50%, #FFD1DC 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -22,244 +24,104 @@
       position: relative;
     }
 
-    /* Main container */
-    .container {
-      position: relative;
-      width: 90vmin;
-      height: 90vmin;
-      max-width: 700px;
-      max-height: 700px;
-      cursor: pointer;
+    /* Full-screen canvas for pixel art bot */
+    canvas {
+      display: block;
+      max-width: 100vw;
+      max-height: 100vh;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
 
-    /* Face - the main thing */
-    .face {
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at 30% 30%, #FFB3BA, #FFC0CB);
-      border-radius: 50%;
-      position: relative;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-      animation: breathe 4s ease-in-out infinite;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    @keyframes breathe {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.03); }
-    }
-
-    /* Eyes */
-    .eyes {
-      position: absolute;
-      top: 35%;
+    /* Task info - floating at bottom */
+    .info {
+      position: fixed;
+      bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
-      gap: 15vmin;
-      z-index: 10;
-    }
-
-    .eye {
-      width: 12vmin;
-      height: 16vmin;
-      background: #000;
-      border-radius: 20%;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .pupil {
-      width: 5vmin;
-      height: 7vmin;
-      background: #FFB3BA;
-      border-radius: 50%;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      transition: all 0.1s ease-out;
-    }
-
-    /* Mouth SVG */
-    .mouth {
-      position: absolute;
-      bottom: 25%;
-      left: 50%;
-      width: 8vmin;
-      height: 6vmin;
-      transform: translateX(-50%);
-    }
-
-    svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .mouth-path {
-      stroke: #000;
-      stroke-width: 0.8;
-      fill: none;
-      stroke-linecap: round;
-      transition: d 0.3s ease;
-    }
-
-    /* Emotion states */
-    .face.focused {
-      animation: focusedBreathe 2.5s ease-in-out infinite;
-    }
-
-    .face.happy {
-      animation: happyBounce 0.8s ease-in-out;
-    }
-
-    .face.excited {
-      animation: excitedPulse 0.5s ease-in-out infinite;
-    }
-
-    .face.stressed {
-      animation: stressShake 0.2s ease-in-out infinite;
-    }
-
-    .face.tired {
-      opacity: 0.7;
-      animation: tiredBreathe 5s ease-in-out infinite;
-    }
-
-    .face.sleeping {
-      animation: sleepPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes focusedBreathe {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.01); }
-    }
-
-    @keyframes happyBounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-15px); }
-    }
-
-    @keyframes excitedPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-    }
-
-    @keyframes stressShake {
-      0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(-2deg); }
-      75% { transform: rotate(2deg); }
-    }
-
-    @keyframes tiredBreathe {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-    }
-
-    @keyframes sleepPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.75; }
-    }
-
-    /* Context panel - subtle */
-    .context {
-      position: absolute;
-      bottom: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(15px);
-      border-radius: 20px;
-      padding: 15px 30px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 12px 25px;
       text-align: center;
+      font-size: 13px;
+      color: #333;
       opacity: 0;
-      pointer-events: none;
       transition: opacity 0.3s ease;
-      z-index: 15;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    .container:hover .context {
+    body:hover .info {
       opacity: 1;
     }
 
-    .task-name {
-      font-size: 14px;
+    .task-text {
       font-weight: 600;
-      color: #333;
-      margin-bottom: 8px;
-      line-height: 1.3;
+      margin-bottom: 5px;
     }
 
     .energy-bar {
-      width: 120px;
-      height: 4px;
+      width: 100px;
+      height: 3px;
       background: rgba(0, 0, 0, 0.1);
       border-radius: 2px;
       overflow: hidden;
-      margin: 0 auto;
     }
 
     .energy-fill {
       height: 100%;
       background: linear-gradient(90deg, #FFB3BA, #FF9A9E);
       transition: width 0.3s ease;
-      border-radius: 2px;
     }
 
-    /* Interaction buttons - only on hover */
+    /* Buttons - float above info */
     .buttons {
-      position: absolute;
-      bottom: 30px;
+      position: fixed;
+      bottom: 100px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 15px;
+      gap: 10px;
       opacity: 0;
       pointer-events: none;
       transition: all 0.3s ease;
-      z-index: 15;
+      z-index: 10;
     }
 
-    .container:hover .buttons {
+    body:hover .buttons {
       opacity: 1;
       pointer-events: auto;
-      bottom: 40px;
+      bottom: 110px;
     }
 
     button {
-      width: 45px;
-      height: 45px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       border: none;
       background: white;
       cursor: pointer;
-      font-size: 20px;
+      font-size: 18px;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     button:hover {
       transform: scale(1.2);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
     }
 
     button:active {
       transform: scale(0.9);
     }
 
-    /* Floating particles for reactions */
+    /* Particles */
     .particle {
       position: fixed;
-      font-size: 40px;
+      font-size: 30px;
       pointer-events: none;
-      animation: float-up 2s ease-out forwards;
+      animation: float-up 1.5s ease-out forwards;
       z-index: 100;
     }
 
@@ -270,84 +132,204 @@
       }
       100% {
         opacity: 0;
-        transform: translateY(-150px) translateX(var(--tx, 0px)) scale(0.5);
-      }
-    }
-
-    /* Responsive */
-    @media (max-width: 600px) {
-      .eyes {
-        gap: 10vmin;
-      }
-
-      .eye {
-        width: 10vmin;
-        height: 14vmin;
-      }
-
-      button {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-      }
-
-      .context {
-        padding: 12px 20px;
-      }
-
-      .task-name {
-        font-size: 12px;
+        transform: translateY(-100px) translateX(var(--tx, 0px)) scale(0.5);
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Main expressive face -->
-    <div class="face" id="face">
-      <!-- Eyes -->
-      <div class="eyes">
-        <div class="eye">
-          <div class="pupil" id="pupil-1"></div>
-        </div>
-        <div class="eye">
-          <div class="pupil" id="pupil-2"></div>
-        </div>
-      </div>
+  <canvas id="canvas"></canvas>
 
-      <!-- Mouth -->
-      <div class="mouth">
-        <svg viewBox="0 0 10 10">
-          <path id="mouth-path" class="mouth-path" d="M 2 5 Q 5 8 8 5"></path>
-        </svg>
-      </div>
-    </div>
+  <div class="buttons">
+    <button onclick="interact('pat')" title="Pat">👋</button>
+    <button onclick="interact('coffee')" title="Coffee">☕</button>
+    <button onclick="interact('tickle')" title="Tickle">😄</button>
+  </div>
 
-    <!-- Context: What I'm doing (appears on hover) -->
-    <div class="context">
-      <div class="task-name" id="task">Just thinking...</div>
-      <div class="energy-bar">
-        <div class="energy-fill" id="energy-fill" style="width: 100%"></div>
-      </div>
-    </div>
-
-    <!-- Interaction buttons (appear on hover) -->
-    <div class="buttons">
-      <button onclick="interact('pat')" title="Pat me">👋</button>
-      <button onclick="interact('coffee')" title="Give coffee">☕</button>
-      <button onclick="interact('tickle')" title="Tickle">😄</button>
+  <div class="info">
+    <div class="task-text" id="task">Just existing...</div>
+    <div class="energy-bar">
+      <div class="energy-fill" id="energy-fill" style="width: 100%"></div>
     </div>
   </div>
 
   <script>
-    // WebSocket connection
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Canvas setup
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Pixel art bot
+    const bot = {
+      x: 0,
+      y: 0,
+      scale: 4, // Pixel scale
+      emotion: 'focused',
+      task: 'Just existing...',
+      energy: 100,
+      idleTime: 0,
+      bobAmount: 0,
+      eyeBlink: 0,
+      mouthFrame: 0,
+    };
+
+    // Pixel palette
+    const colors = {
+      skin: '#FFD1DC',
+      head: '#FFB3BA',
+      dark: '#333333',
+      white: '#FFFFFF',
+      blush: '#FF9A9E',
+    };
+
+    function drawPixel(x, y, size, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, size, size);
+    }
+
+    function drawBot(centerX, centerY) {
+      const scale = bot.scale;
+      const bobY = Math.sin(bot.idleTime * 0.05) * 8;
+      const y = centerY + bobY;
+
+      // Head (main circle-ish shape in pixel art)
+      const headWidth = 60;
+      const headHeight = 70;
+      ctx.fillStyle = colors.head;
+      ctx.beginPath();
+      ctx.ellipse(centerX, y - 20, headWidth, headHeight, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Blush
+      ctx.fillStyle = colors.blush;
+      ctx.fillRect(centerX - 80, y + 10, 20, 15);
+      ctx.fillRect(centerX + 60, y + 10, 20, 15);
+
+      // LEFT EYE
+      if (bot.eyeBlink < 5) {
+        ctx.fillStyle = colors.dark;
+        ctx.fillRect(centerX - 35, y - 25, 20, 20); // sclera
+        // Pupil with look direction
+        const lookOffset = Math.sin(bot.idleTime * 0.03) * 5;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(centerX - 32, y - 22, 12, 12);
+        ctx.fillStyle = colors.dark;
+        ctx.fillRect(centerX - 30 + lookOffset, y - 20 + lookOffset, 6, 6);
+      } else {
+        // Closed eye (cute line)
+        ctx.fillStyle = colors.dark;
+        ctx.fillRect(centerX - 35, y - 20, 20, 4);
+      }
+
+      // RIGHT EYE
+      if (bot.eyeBlink < 5) {
+        ctx.fillStyle = colors.dark;
+        ctx.fillRect(centerX + 15, y - 25, 20, 20); // sclera
+        // Pupil
+        const lookOffset = Math.sin(bot.idleTime * 0.03) * 5;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(centerX + 18, y - 22, 12, 12);
+        ctx.fillStyle = colors.dark;
+        ctx.fillRect(centerX + 20 + lookOffset, y - 20 + lookOffset, 6, 6);
+      } else {
+        // Closed eye
+        ctx.fillStyle = colors.dark;
+        ctx.fillRect(centerX + 15, y - 20, 20, 4);
+      }
+
+      // MOUTH - changes with emotion
+      const mouthY = y + 30;
+      ctx.fillStyle = colors.dark;
+
+      if (bot.emotion === 'happy' || bot.emotion === 'excited') {
+        // Happy smile
+        ctx.fillRect(centerX - 15, mouthY, 30, 4); // Mouth line
+        ctx.fillRect(centerX - 18, mouthY + 2, 3, 3); // Left corner
+        ctx.fillRect(centerX + 15, mouthY + 2, 3, 3); // Right corner
+      } else if (bot.emotion === 'stressed') {
+        // Worried line
+        ctx.fillRect(centerX - 18, mouthY, 36, 3);
+      } else if (bot.emotion === 'tired' || bot.emotion === 'sleeping') {
+        // Closed/tired
+        ctx.fillRect(centerX - 15, mouthY + 5, 30, 2);
+      } else {
+        // Neutral smile (focused)
+        ctx.fillRect(centerX - 12, mouthY + 3, 24, 2);
+      }
+
+      // BODY
+      ctx.fillStyle = colors.head;
+      ctx.fillRect(centerX - 35, y + 40, 70, 50); // Torso
+
+      // ARMS (idle movement)
+      const armBobLeft = Math.sin(bot.idleTime * 0.04) * 10;
+      const armBobRight = Math.sin(bot.idleTime * 0.04 + 1) * 10;
+
+      ctx.fillStyle = colors.head;
+      // Left arm
+      ctx.fillRect(centerX - 50, y + 50 + armBobLeft, 15, 30);
+      // Right arm
+      ctx.fillRect(centerX + 35, y + 50 + armBobRight, 15, 30);
+
+      // LEGS
+      ctx.fillStyle = colors.head;
+      ctx.fillRect(centerX - 22, y + 85, 18, 30); // Left leg
+      ctx.fillRect(centerX + 4, y + 85, 18, 30);   // Right leg
+    }
+
+    function updateEmotion() {
+      if (bot.emotion === 'happy') {
+        return 'radial-gradient(135deg, #FFD1DC 0%, #FFCCCF 100%)';
+      } else if (bot.emotion === 'excited') {
+        return 'linear-gradient(135deg, #FF9A9E 0%, #FFB3BA 100%)';
+      } else if (bot.emotion === 'stressed') {
+        return 'linear-gradient(135deg, #FFB3BA 0%, #FFA5AB 100%)';
+      } else if (bot.emotion === 'tired') {
+        return 'linear-gradient(135deg, #FFD1DC 0%, #E8B4C0 100%)';
+      } else if (bot.emotion === 'sleeping') {
+        return 'linear-gradient(135deg, #FFE0E6 0%, #FFD1DC 100%)';
+      }
+      return 'linear-gradient(135deg, #FFB3BA 0%, #FFCCCF 100%)';
+    }
+
+    function animate() {
+      // Update background color based on emotion
+      document.body.style.background = updateEmotion();
+
+      // Clear canvas
+      ctx.fillStyle = '#FFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw bot in center
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2 - 20;
+
+      drawBot(centerX, centerY);
+
+      // Update animation counters
+      bot.idleTime++;
+      bot.eyeBlink++;
+      if (bot.eyeBlink > 60) bot.eyeBlink = 0;
+
+      // Occasional blinks
+      if (bot.eyeBlink > 55) {
+        // eyes are closed
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // WebSocket
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const ws = new WebSocket(`${protocol}//${window.location.host}`);
-
-    const face = document.getElementById('face');
-    const pupils = [document.getElementById('pupil-1'), document.getElementById('pupil-2')];
-    const taskEl = document.getElementById('task');
-    const energyFill = document.getElementById('energy-fill');
 
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
@@ -360,25 +342,12 @@
     };
 
     function updateStatus(status) {
-      // Update emotion - PRIMARY
-      face.className = `face ${status.emotion}`;
+      bot.emotion = status.emotion;
+      bot.task = status.task;
+      bot.energy = status.energy;
 
-      // Update context info - SECONDARY
-      taskEl.textContent = status.task || 'Just existing...';
-      
-      // Energy bar
-      energyFill.style.width = `${status.energy}%`;
-
-      // Dynamic background based on emotion
-      const emotionBgMap = {
-        focused: 'radial-gradient(circle at 30% 30%, #FFB3BA, #FFC0CB)',
-        happy: 'radial-gradient(circle at 30% 30%, #FFD1DC, #FFE0E6)',
-        excited: 'radial-gradient(circle at 30% 30%, #FF9A9E, #FFB3BA)',
-        stressed: 'radial-gradient(circle at 30% 30%, #FFB3BA, #FFA5AB)',
-        tired: 'radial-gradient(circle at 30% 30%, #FFD1DC, #E8B4C0)',
-        sleeping: 'radial-gradient(circle at 30% 30%, #FFE0E6, #FFD1DC)',
-      };
-      face.style.background = emotionBgMap[status.emotion] || emotionBgMap.focused;
+      document.getElementById('task').textContent = status.task;
+      document.getElementById('energy-fill').style.width = `${status.energy}%`;
     }
 
     function interact(action) {
@@ -390,8 +359,6 @@
         pat: '❤️',
         tickle: '😂',
         coffee: '⚡',
-        stress: '😰',
-        sleep: '💤',
       }[action] || '✨';
 
       const particle = document.createElement('div');
@@ -402,40 +369,8 @@
       particle.style.setProperty('--tx', (Math.random() - 0.5) * 80 + 'px');
       document.body.appendChild(particle);
 
-      setTimeout(() => particle.remove(), 2000);
+      setTimeout(() => particle.remove(), 1500);
     }
-
-    // Eye tracking - smooth, natural movement
-    document.addEventListener('mousemove', (e) => {
-      const container = document.querySelector('.container');
-      const rect = container.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-      const distance = 3.5;
-
-      pupils.forEach((pupil) => {
-        const x = Math.cos(angle) * distance;
-        const y = Math.sin(angle) * distance;
-        pupil.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
-      });
-    });
-
-    // Occasional blinking
-    setInterval(() => {
-      if (Math.random() > 0.97) {
-        const eyes = document.querySelectorAll('.eye');
-        eyes.forEach(eye => {
-          eye.style.transform = 'scaleY(0.05)';
-        });
-        setTimeout(() => {
-          eyes.forEach(eye => {
-            eye.style.transform = '';
-          });
-        }, 100);
-      }
-    }, 1000);
   </script>
 </body>
 </html>
