@@ -153,6 +153,20 @@ const PROFILES = {
     eventDelay: [150, 350],
     showZzz: false,
   },
+  angry: {
+    bg: '#C85A5A',        // RED — heated
+    eyeOpen: 0.3,         // narrow, glaring
+    mouthChance: 0.7,     // gritting teeth
+    bobSpeed: 0.04,       // fast, aggressive breathing
+    bobAmount: 3,
+    driftSpeed: 0.002,    // eyes locked forward (staring you down)
+    driftAmount: 0.5,
+    blinkRate: 0.05,      // barely blinks — intense stare
+    squintRate: 0.4,      // lots of squinting
+    eventDelay: [30, 80], // twitchy, fast
+    showZzz: false,
+    jitter: true,         // SHAKING with rage
+  },
   texting: {
     bg: '#E0926E',        // warm, active
     eyeOpen: 0.8,         // slightly focused
@@ -199,6 +213,7 @@ const STATS = {
   tired:     { bpm: [50, 60],  hype: [10, 25],  vibe: '🥱 need coffee' },
   bored:     { bpm: [55, 65],  hype: [5, 20],   vibe: '😑 meh...' },
   curious:   { bpm: [70, 85],  hype: [55, 75],  vibe: '👀 interesting...' },
+  angry:     { bpm: [100, 130], hype: [70, 95],  vibe: '😤 don\'t test me' },
   thinking:  { bpm: [65, 78],  hype: [40, 60],  vibe: '🧠 processing...' },
   texting:   { bpm: [72, 85],  hype: [45, 65],  vibe: '💬 typing...' },
 };
