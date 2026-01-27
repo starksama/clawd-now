@@ -2,401 +2,216 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Stark</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    canvas {
+      display: block;
       width: 100vw;
       height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      overflow: hidden;
-      background-color: #E8937C;
-      transition: background-color 0.8s ease;
-    }
-
-    .container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Eyes container */
-    .eyes {
-      position: absolute;
-      top: 35%;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 35vmin;
-      z-index: 10;
-    }
-
-    /* Eye */
-    .eye {
-      width: 12vmin;
-      height: 8vmin;
-      background-color: #3D2817;
-      border-radius: 40%;
-      position: relative;
-      animation: eyeBlink 4s ease-in-out infinite;
-    }
-
-    @keyframes eyeBlink {
-      0%, 10%, 90%, 100% {
-        scaleY: 1;
-      }
-      5% {
-        scaleY: 0.1;
-      }
-    }
-
-    .eye:nth-child(2) {
-      animation-delay: 0.1s;
-    }
-
-    /* Mouth */
-    .mouth {
-      position: absolute;
-      bottom: 38%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 8vmin;
-      height: 4vmin;
-      background-color: #3D2817;
-      border-radius: 50%;
-    }
-
-    /* Emotion states */
-    body.happy .mouth {
-      animation: happyMouth 0.3s ease-out forwards;
-    }
-
-    body.excited .mouth {
-      animation: excitedMouth 0.3s ease-out forwards;
-    }
-
-    body.stressed .mouth {
-      animation: stressedMouth 0.3s ease-out forwards;
-    }
-
-    body.tired .mouth {
-      animation: tiredMouth 0.3s ease-out forwards;
-    }
-
-    body.sleeping .mouth {
-      animation: sleepingMouth 0.3s ease-out forwards;
-    }
-
-    @keyframes happyMouth {
-      to {
-        border-radius: 50% 50% 30% 30%;
-        height: 5vmin;
-      }
-    }
-
-    @keyframes excitedMouth {
-      to {
-        border-radius: 50%;
-        height: 6vmin;
-        animation: excitedBounce 0.4s ease-in-out 0.3s infinite;
-      }
-    }
-
-    @keyframes excitedBounce {
-      0%, 100% {
-        transform: translateX(-50%) scaleY(1);
-      }
-      50% {
-        transform: translateX(-50%) scaleY(0.8);
-      }
-    }
-
-    @keyframes stressedMouth {
-      to {
-        border-radius: 50%;
-        height: 3vmin;
-        opacity: 0.6;
-      }
-    }
-
-    @keyframes tiredMouth {
-      to {
-        height: 2vmin;
-        opacity: 0.5;
-        border-radius: 10%;
-      }
-    }
-
-    @keyframes sleepingMouth {
-      to {
-        height: 1.5vmin;
-        opacity: 0.4;
-        border-radius: 10%;
-      }
-    }
-
-    /* Bounce/movement */
-    .face {
-      animation: gentleBob 3s ease-in-out infinite;
-    }
-
-    @keyframes gentleBob {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-20px);
-      }
-    }
-
-    /* Emotion colors */
-    body.focused {
-      background-color: #E8937C;
-    }
-
-    body.happy {
-      background-color: #F0A896;
-    }
-
-    body.excited {
-      background-color: #E8754A;
-    }
-
-    body.stressed {
-      background-color: #D97546;
-    }
-
-    body.tired {
-      background-color: #D9B5A8;
-    }
-
-    body.sleeping {
-      background-color: #E8C9C0;
-    }
-
-    /* Info - hover */
-    .info {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 10px 20px;
-      text-align: center;
-      font-size: 12px;
-      color: #333;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    body:hover .info {
-      opacity: 1;
-    }
-
-    .task {
-      font-weight: 600;
-      margin-bottom: 5px;
-    }
-
-    .energy-bar {
-      width: 80px;
-      height: 2px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 1px;
-      overflow: hidden;
-      margin: 0 auto;
-    }
-
-    .energy-fill {
-      height: 100%;
-      background: #3D2817;
-      transition: width 0.3s ease;
-    }
-
-    /* Buttons */
-    .buttons {
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 12px;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.3s ease;
-      z-index: 10;
-    }
-
-    body:hover .buttons {
-      opacity: 1;
-      pointer-events: auto;
-      bottom: 90px;
-    }
-
-    button {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: none;
-      background: white;
-      cursor: pointer;
-      font-size: 18px;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    button:hover {
-      transform: scale(1.2);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    button:active {
-      transform: scale(0.85);
-    }
-
-    /* Reaction animation */
-    .reaction {
-      position: fixed;
-      font-size: 50px;
-      pointer-events: none;
-      animation: popReaction 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-      z-index: 100;
-    }
-
-    @keyframes popReaction {
-      0% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(0.5);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(1.5);
-      }
-    }
-
-    /* Face element for animations */
-    .face {
-      position: relative;
-    }
-
-    .eyes, .mouth {
-      animation: gentleBob 3s ease-in-out infinite;
-    }
-
-    .eyes {
-      animation-name: gentleBob;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
   </style>
 </head>
-<body class="sleeping">
-  <div class="container">
-    <div class="face">
-      <div class="eyes">
-        <div class="eye"></div>
-        <div class="eye"></div>
-      </div>
-      <div class="mouth"></div>
-    </div>
-  </div>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ── Config ──────────────────────────────────────────
+const COLORS = {
+  sleeping: '#E8C9C0',
+  focused:  '#E8937C',
+  happy:    '#F0A896',
+  excited:  '#E8754A',
+  stressed: '#D97546',
+  tired:    '#D9B5A8',
+};
+const EYE_COLOR = '#3D2817';
+const PIXEL = 6; // base pixel size, scales with screen
 
-  <div class="buttons">
-    <button onclick="interact('pat')" title="Pat me">👋</button>
-    <button onclick="interact('tickle')" title="Tickle me">😄</button>
-  </div>
+// ── State ───────────────────────────────────────────
+let emotion = 'sleeping';
+let task = 'Resting peacefully...';
+let energy = 100;
+let tick = 0;
+let blinkTimer = 0;
+let isBlinking = false;
+let nextBlink = randomBlink();
+let particles = [];
+let bobPhase = 0;
 
-  <div class="info">
-    <div class="task" id="task">Resting peacefully...</div>
-    <div class="energy-bar">
-      <div class="energy-fill" id="energy-fill" style="width: 100%"></div>
-    </div>
-  </div>
+function randomBlink() { return 120 + Math.random() * 200; } // frames between blinks
 
-  <script>
-    const emotionMap = {
-      focused: '#E8937C',
-      happy: '#F0A896',
-      excited: '#E8754A',
-      stressed: '#D97546',
-      tired: '#D9B5A8',
-      sleeping: '#E8C9C0',
-    };
+// ── Canvas ──────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
 
-    let currentEmotion = 'sleeping';
+function resize() {
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  ctx.imageSmoothingEnabled = false;
+}
+resize();
+window.addEventListener('resize', resize);
 
-    // WebSocket
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}`);
+// ── Drawing ─────────────────────────────────────────
+function drawRect(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
 
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      
-      if (message.type === 'statusUpdate') {
-        updateStatus(message.data);
-      } else if (message.type === 'interaction') {
-        showReaction(message.action);
-      }
-    };
+function draw() {
+  const W = canvas.width;
+  const H = canvas.height;
+  const scale = Math.min(W, H) / 200; // everything relative to 200-unit grid
+  const cx = W / 2;
+  const cy = H / 2;
 
-    function updateStatus(status) {
-      // Update emotion
-      currentEmotion = status.emotion;
-      document.body.className = status.emotion;
+  // Background
+  const bg = COLORS[emotion] || COLORS.focused;
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
 
-      // Update info
-      document.getElementById('task').textContent = status.task || 'Resting...';
-      document.getElementById('energy-fill').style.width = `${status.energy}%`;
+  // Gentle bob
+  bobPhase += 0.02;
+  const bobY = Math.sin(bobPhase) * scale * 3;
+
+  // ── Eyes ──
+  const eyeW = scale * 16;
+  const eyeH = isBlinking ? scale * 2 : scale * 14;
+  const eyeGap = scale * 22;
+  const eyeY = cy - scale * 10 + bobY;
+
+  // Sleeping = half-closed eyes (shorter)
+  let finalEyeH = eyeH;
+  if (emotion === 'sleeping' && !isBlinking) {
+    finalEyeH = scale * 3;
+  } else if (emotion === 'tired' && !isBlinking) {
+    finalEyeH = scale * 6;
+  }
+
+  // Left eye
+  drawRect(cx - eyeGap - eyeW / 2, eyeY - finalEyeH / 2, eyeW, finalEyeH, EYE_COLOR);
+  // Right eye
+  drawRect(cx + eyeGap - eyeW / 2, eyeY - finalEyeH / 2, eyeW, finalEyeH, EYE_COLOR);
+
+  // ── Mouth ──
+  const mouthY = cy + scale * 16 + bobY;
+  let mouthW = scale * 8;
+  let mouthH = scale * 3;
+
+  if (emotion === 'happy' || emotion === 'excited') {
+    mouthW = scale * 14;
+    mouthH = scale * 5;
+  } else if (emotion === 'stressed') {
+    mouthW = scale * 10;
+    mouthH = scale * 2;
+  } else if (emotion === 'sleeping' || emotion === 'tired') {
+    mouthW = scale * 6;
+    mouthH = scale * 1.5;
+  }
+
+  drawRect(cx - mouthW / 2, mouthY - mouthH / 2, mouthW, mouthH, EYE_COLOR);
+
+  // ── Floating Z's (sleeping) ──
+  if (emotion === 'sleeping') {
+    const zSize = scale * 6;
+    for (let i = 0; i < 3; i++) {
+      const phase = (tick * 0.01 + i * 2) % 6;
+      const zx = cx + scale * 30 + i * scale * 8;
+      const zy = cy - scale * 30 - phase * scale * 10;
+      const alpha = Math.max(0, 1 - phase / 6);
+      const fontSize = Math.round(zSize * (1 + i * 0.3));
+      ctx.font = `bold ${fontSize}px monospace`;
+      ctx.fillStyle = EYE_COLOR;
+      ctx.globalAlpha = alpha;
+      ctx.fillText('z', zx, zy + bobY);
     }
+    ctx.globalAlpha = 1;
+  }
 
-    function interact(action) {
-      ws.send(JSON.stringify({ type: 'interact', action }));
+  // ── Particles (reactions) ──
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.y -= 2;
+    p.life--;
+    p.x += p.vx;
+    ctx.globalAlpha = p.life / p.maxLife;
+    ctx.font = `${Math.round(scale * 8)}px sans-serif`;
+    ctx.fillText(p.emoji, p.x, p.y);
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ── Animation Loop ──────────────────────────────────
+function loop() {
+  tick++;
+
+  // Blink logic
+  blinkTimer++;
+  if (blinkTimer >= nextBlink && !isBlinking) {
+    isBlinking = true;
+    setTimeout(() => {
+      isBlinking = false;
+      blinkTimer = 0;
+      nextBlink = randomBlink();
+    }, 120);
+  }
+
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ── Interactions ────────────────────────────────────
+canvas.addEventListener('click', (e) => {
+  // Spawn heart particle at click position
+  spawnParticle(e.clientX * devicePixelRatio, e.clientY * devicePixelRatio, '❤️');
+  interact('pat');
+});
+
+function spawnParticle(x, y, emoji) {
+  particles.push({
+    x, y, emoji,
+    vx: (Math.random() - 0.5) * 3,
+    life: 60,
+    maxLife: 60,
+  });
+}
+
+function interact(action) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'interact', action }));
+  }
+}
+
+// ── WebSocket ───────────────────────────────────────
+const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+const ws = new WebSocket(`${protocol}//${location.host}`);
+
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  if (msg.type === 'statusUpdate') {
+    emotion = msg.data.emotion;
+    task = msg.data.task;
+    energy = msg.data.energy;
+  }
+  if (msg.type === 'interaction') {
+    const W = canvas.width;
+    const H = canvas.height;
+    const emojis = { pat: '❤️', tickle: '😂' };
+    for (let i = 0; i < 5; i++) {
+      spawnParticle(
+        W / 2 + (Math.random() - 0.5) * W * 0.4,
+        H / 2 + (Math.random() - 0.5) * H * 0.3,
+        emojis[msg.action] || '✨'
+      );
     }
-
-    function showReaction(action) {
-      const emoji = {
-        pat: '💚',
-        tickle: '😂',
-        coffee: '⚡',
-      }[action] || '✨';
-
-      const reaction = document.createElement('div');
-      reaction.className = 'reaction';
-      reaction.textContent = emoji;
-      
-      const mouseX = event?.clientX || window.innerWidth / 2;
-      const mouseY = event?.clientY || window.innerHeight / 2;
-      
-      reaction.style.left = mouseX + 'px';
-      reaction.style.top = mouseY + 'px';
-
-      document.body.appendChild(reaction);
-
-      setTimeout(() => reaction.remove(), 800);
-
-      // Update emotion temporarily
-      if (action === 'pat' || action === 'tickle') {
-        const oldEmotion = currentEmotion;
-        document.body.className = 'happy';
-        setTimeout(() => {
-          document.body.className = oldEmotion;
-        }, 500);
-      }
-    }
-  </script>
+  }
+};
+</script>
 </body>
 </html>
