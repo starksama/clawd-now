@@ -1,0 +1,24 @@
+{
+  "name": "clawd-dashboard",
+  "version": "0.1.0",
+  "description": "Interactive progress dashboard - watch Stark work in real-time with emotions & reactions",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "echo 'No build needed - pure client-side'",
+    "start": "NODE_ENV=production node server.js"
+  },
+  "keywords": [
+    "dashboard",
+    "progress",
+    "realtime",
+    "websocket",
+    "interactive"
+  ],
+  "author": "Stark (@starksama)",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
+  }
+}
