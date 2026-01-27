@@ -19,15 +19,103 @@
 <body>
 <canvas id="c"></canvas>
 <script>
-// ── Config ──────────────────────────────────────────
-const COLORS = {
-  sleeping: '#E8C9C0',
-  focused:  '#E8937C',
-  happy:    '#F0A896',
-  excited:  '#E8754A',
-  stressed: '#D97546',
-  tired:    '#D9B5A8',
+// ── Emotion Profiles ────────────────────────────────
+// Each emotion defines HOW the face behaves
+const PROFILES = {
+  sleeping: {
+    bg: '#E8C9C0',
+    eyeOpen: 0.12,        // barely open (flat bars)
+    mouthChance: 0.05,    // almost never shows mouth
+    bobSpeed: 0.008,      // very slow breathing
+    bobAmount: 1.5,
+    driftSpeed: 0.002,    // barely moves
+    driftAmount: 1,
+    blinkRate: 0.005,     // rare blinks (already closed)
+    squintRate: 0.01,
+    eventDelay: [200, 400], // slow events
+    showZzz: true,
+  },
+  idle: {
+    bg: '#E8937C',
+    eyeOpen: 1.0,
+    mouthChance: 0.4,
+    bobSpeed: 0.015,
+    bobAmount: 2.5,
+    driftSpeed: 0.008,
+    driftAmount: 3,
+    blinkRate: 0.25,
+    squintRate: 0.15,
+    eventDelay: [80, 200],
+    showZzz: false,
+  },
+  focused: {
+    bg: '#D4785E',
+    eyeOpen: 1.0,
+    mouthChance: 0.1,     // rarely shows mouth (concentrating)
+    bobSpeed: 0.025,      // tighter breathing
+    bobAmount: 1.2,       // less movement
+    driftSpeed: 0.003,    // barely looks around (locked in)
+    driftAmount: 0.8,
+    blinkRate: 0.15,      // less blinking
+    squintRate: 0.05,
+    eventDelay: [150, 350], // fewer events
+    showZzz: false,
+  },
+  happy: {
+    bg: '#F0A896',
+    eyeOpen: 1.0,
+    mouthChance: 0.8,     // usually showing mouth
+    bobSpeed: 0.022,
+    bobAmount: 4,         // bouncy!
+    driftSpeed: 0.012,    // looks around more
+    driftAmount: 4,
+    blinkRate: 0.3,
+    squintRate: 0.1,
+    eventDelay: [60, 150], // lively
+    showZzz: false,
+  },
+  excited: {
+    bg: '#E8754A',
+    eyeOpen: 1.0,
+    mouthChance: 0.9,
+    bobSpeed: 0.035,      // fast bouncing
+    bobAmount: 5,         // big bounces
+    driftSpeed: 0.018,    // looks around fast
+    driftAmount: 5,
+    blinkRate: 0.35,
+    squintRate: 0.05,
+    eventDelay: [40, 100], // very active
+    showZzz: false,
+  },
+  stressed: {
+    bg: '#D97546',
+    eyeOpen: 0.7,         // slightly narrowed
+    mouthChance: 0.15,
+    bobSpeed: 0.02,
+    bobAmount: 1.5,
+    driftSpeed: 0.015,    // jittery small movements
+    driftAmount: 2,
+    blinkRate: 0.4,       // blinks a lot
+    squintRate: 0.2,
+    eventDelay: [50, 120], // twitchy
+    showZzz: false,
+    jitter: true,         // adds micro-jitter
+  },
+  tired: {
+    bg: '#D9B5A8',
+    eyeOpen: 0.4,         // half closed
+    mouthChance: 0.2,
+    bobSpeed: 0.01,       // slow
+    bobAmount: 2,
+    driftSpeed: 0.004,    // sluggish
+    driftAmount: 2,
+    blinkRate: 0.15,
+    squintRate: 0.3,      // squints a lot
+    eventDelay: [120, 300],
+    showZzz: false,
+  },
 };
+
 const EYE_COLOR = '#3D2817';
 
 // ── State ───────────────────────────────────────────
@@ -36,15 +124,17 @@ let task = 'Resting peacefully...';
 let energy = 100;
 let tick = 0;
 
-// Animation state — one unified "openness" drives everything
-let openness = 1.0;       // 0 = fully closed (flat bar), 1 = fully open (square)
-let targetOpenness = 1.0;
-let mouthShow = 0.0;      // 0 = hidden, 1 = fully visible
-let targetMouth = 0.0;
+let openness = 0.12;
+let targetOpenness = 0.12;
+let mouthShow = 0;
+let targetMouth = 0;
 
-// Scheduling
-let nextEvent = 60;        // frames until next animation event
-let currentPhase = 'idle'; // idle, closing, closed, opening
+let nextEvent = 100;
+let currentPhase = 'idle';
+
+// Smooth profile interpolation
+let currentProfile = { ...PROFILES.sleeping };
+let targetProfile = PROFILES.sleeping;
 
 // ── Canvas ──────────────────────────────────────────
 const canvas = document.getElementById('c');
@@ -58,83 +148,99 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-// ── Smooth lerp ─────────────────────────────────────
 function lerp(a, b, t) { return a + (b - a) * t; }
+
+// ── Profile Interpolation ───────────────────────────
+function lerpProfile() {
+  const t = 0.02; // slow transition between emotion profiles
+  for (const key of ['bobSpeed', 'bobAmount', 'driftSpeed', 'driftAmount']) {
+    currentProfile[key] = lerp(currentProfile[key], targetProfile[key], t);
+  }
+}
 
 // ── Drawing ─────────────────────────────────────────
 function draw() {
   const W = canvas.width;
   const H = canvas.height;
-  const scale = Math.min(W, H) / 200;
+  // BIGGER face — use more of the screen
+  const scale = Math.min(W, H) / 140;
   const cx = W / 2;
   const cy = H / 2;
 
-  // Background
-  const bg = COLORS[emotion] || COLORS.focused;
-  ctx.fillStyle = bg;
+  const p = currentProfile;
+
+  // Background — smooth color transition
+  ctx.fillStyle = targetProfile.bg;
   ctx.fillRect(0, 0, W, H);
 
-  // Gentle bob
-  const bobY = Math.sin(tick * 0.015) * scale * 2.5;
+  // Bob
+  const bobY = Math.sin(tick * p.bobSpeed) * scale * p.bobAmount;
 
-  // Smooth eye drift (look around)
-  const lookX = Math.sin(tick * 0.008) * scale * 3 + Math.sin(tick * 0.003) * scale * 1.5;
-  const lookY = Math.cos(tick * 0.006) * scale * 1.5 + Math.sin(tick * 0.0025) * scale * 0.8;
+  // Drift (look around)
+  const driftX = Math.sin(tick * p.driftSpeed) * scale * p.driftAmount
+               + Math.sin(tick * p.driftSpeed * 0.4) * scale * p.driftAmount * 0.5;
+  const driftY = Math.cos(tick * p.driftSpeed * 0.75) * scale * p.driftAmount * 0.5
+               + Math.sin(tick * p.driftSpeed * 0.3) * scale * p.driftAmount * 0.3;
+
+  // Jitter (stressed)
+  let jitterX = 0, jitterY = 0;
+  if (targetProfile.jitter) {
+    jitterX = (Math.random() - 0.5) * scale * 0.6;
+    jitterY = (Math.random() - 0.5) * scale * 0.4;
+  }
 
   // ── Eyes ──
   const eyeW = scale * 14;
-  const eyeMaxH = scale * 16;   // fully open = nearly square
-  const eyeMinH = scale * 3;    // fully closed = flat bar
+  const eyeMaxH = scale * 16;
+  const eyeMinH = scale * 2.5;
   const eyeH = lerp(eyeMinH, eyeMaxH, openness);
-  const eyeGap = scale * 20;
-  const eyeY = cy - scale * 8 + bobY + lookY;
+  const eyeGap = scale * 18;
+  const eyeY = cy - scale * 6 + bobY + driftY;
+  const eyeX = cx + driftX + jitterX;
 
   ctx.fillStyle = EYE_COLOR;
-  // Left eye
   ctx.fillRect(
-    Math.round(cx - eyeGap - eyeW / 2 + lookX),
-    Math.round(eyeY - eyeH / 2),
+    Math.round(eyeX - eyeGap - eyeW / 2),
+    Math.round(eyeY - eyeH / 2 + jitterY),
     Math.round(eyeW),
     Math.round(eyeH)
   );
-  // Right eye
   ctx.fillRect(
-    Math.round(cx + eyeGap - eyeW / 2 + lookX),
-    Math.round(eyeY - eyeH / 2),
+    Math.round(eyeX + eyeGap - eyeW / 2),
+    Math.round(eyeY - eyeH / 2 + jitterY),
     Math.round(eyeW),
     Math.round(eyeH)
   );
 
-  // ── Mouth ── (coordinated with eyes)
+  // ── Mouth ──
   if (mouthShow > 0.02) {
     const mouthW = scale * 8;
     const mouthMaxH = scale * 4;
     const mouthH = mouthMaxH * mouthShow;
-    const mouthY = cy + scale * 16 + bobY + lookY * 0.3;
+    const mouthY = cy + scale * 16 + bobY + driftY * 0.3;
 
-    ctx.globalAlpha = mouthShow;
+    ctx.globalAlpha = Math.min(1, mouthShow);
     ctx.fillStyle = EYE_COLOR;
     ctx.fillRect(
-      Math.round(cx - mouthW / 2 + lookX * 0.3),
-      Math.round(mouthY - mouthH / 2),
+      Math.round(eyeX - mouthW / 2 + jitterX * 0.3),
+      Math.round(mouthY - mouthH / 2 + jitterY * 0.3),
       Math.round(mouthW),
       Math.round(mouthH)
     );
     ctx.globalAlpha = 1;
   }
 
-  // ── Floating Z's (sleeping) ──
-  if (emotion === 'sleeping' && openness < 0.4) {
-    const zSize = scale * 6;
+  // ── Z's (sleeping) ──
+  if (targetProfile.showZzz && openness < 0.3) {
     for (let i = 0; i < 3; i++) {
       const phase = (tick * 0.008 + i * 2) % 6;
-      const zx = cx + scale * 28 + i * scale * 8;
-      const zy = cy - scale * 25 - phase * scale * 10;
+      const zx = eyeX + scale * 25 + i * scale * 7;
+      const zy = cy - scale * 20 - phase * scale * 10;
       const alpha = Math.max(0, 1 - phase / 6);
-      const fontSize = Math.round(zSize * (1 + i * 0.3));
+      const fontSize = Math.round(scale * 5 * (1 + i * 0.3));
       ctx.font = `bold ${fontSize}px monospace`;
       ctx.fillStyle = EYE_COLOR;
-      ctx.globalAlpha = alpha * 0.6;
+      ctx.globalAlpha = alpha * 0.5;
       ctx.fillText('z', zx, zy + bobY);
     }
     ctx.globalAlpha = 1;
@@ -142,74 +248,60 @@ function draw() {
 }
 
 // ── Animation Logic ─────────────────────────────────
-function scheduleNext() {
-  // Random delay between events
-  nextEvent = 80 + Math.random() * 200;
-}
-
 function updateAnimation() {
-  // Smoothly move toward targets
+  const p = targetProfile;
+
+  // Smooth lerp toward targets
   openness = lerp(openness, targetOpenness, 0.04);
   mouthShow = lerp(mouthShow, targetMouth, 0.05);
 
+  // Interpolate profile values
+  lerpProfile();
+
   nextEvent--;
   if (nextEvent <= 0) {
-    // Choose next animation phase
     if (currentPhase === 'idle') {
-      // Sometimes blink (quick close-open)
-      // Sometimes do a slow squint
-      // Sometimes toggle mouth
       const r = Math.random();
-
-      if (r < 0.35) {
+      if (r < p.blinkRate) {
         // Quick blink
         currentPhase = 'blinking';
         targetOpenness = 0;
-        nextEvent = 12; // short hold
-      } else if (r < 0.55) {
-        // Slow squint (close halfway, hold, reopen)
+        nextEvent = 10;
+      } else if (r < p.blinkRate + p.squintRate) {
+        // Slow squint
         currentPhase = 'squinting';
-        targetOpenness = 0.15;
-        nextEvent = 40 + Math.random() * 60;
-      } else if (r < 0.75) {
+        targetOpenness = p.eyeOpen * 0.15;
+        nextEvent = 30 + Math.random() * 50;
+      } else if (r < p.blinkRate + p.squintRate + 0.2) {
         // Toggle mouth
-        targetMouth = targetMouth > 0.5 ? 0 : 1;
-        currentPhase = 'idle';
+        targetMouth = Math.random() < p.mouthChance ? 1 : 0;
         scheduleNext();
       } else {
-        // Just wait
         scheduleNext();
       }
     } else if (currentPhase === 'blinking') {
-      // Open back up
-      targetOpenness = getEmotionOpenness();
+      targetOpenness = p.eyeOpen;
       currentPhase = 'idle';
       scheduleNext();
     } else if (currentPhase === 'squinting') {
-      // Open back up, maybe change mouth
-      targetOpenness = getEmotionOpenness();
-      // Mouth often appears/disappears with squint transitions
-      if (Math.random() < 0.5) {
-        targetMouth = targetMouth > 0.5 ? 0 : 1;
+      targetOpenness = p.eyeOpen;
+      if (Math.random() < 0.4) {
+        targetMouth = Math.random() < p.mouthChance ? 1 : 0;
       }
       currentPhase = 'idle';
       scheduleNext();
     }
   }
 
-  // Mouth tends to hide when eyes are very closed
-  if (openness < 0.25 && targetMouth > 0.5) {
+  // Hide mouth when eyes mostly closed
+  if (openness < 0.2 && targetMouth > 0.5) {
     targetMouth = 0;
   }
 }
 
-function getEmotionOpenness() {
-  switch (emotion) {
-    case 'sleeping': return 0.15;
-    case 'tired': return 0.45;
-    case 'stressed': return 0.7;
-    default: return 1.0;
-  }
+function scheduleNext() {
+  const [min, max] = targetProfile.eventDelay;
+  nextEvent = min + Math.random() * (max - min);
 }
 
 // ── Main Loop ───────────────────────────────────────
@@ -221,6 +313,17 @@ function loop() {
 }
 loop();
 
+// ── Emotion Change ──────────────────────────────────
+function setEmotion(newEmotion) {
+  if (PROFILES[newEmotion]) {
+    emotion = newEmotion;
+    targetProfile = PROFILES[newEmotion];
+    targetOpenness = targetProfile.eyeOpen;
+    // Reset mouth based on new emotion's mouth chance
+    targetMouth = Math.random() < targetProfile.mouthChance ? 1 : 0;
+  }
+}
+
 // ── WebSocket ───────────────────────────────────────
 const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const ws = new WebSocket(`${protocol}//${location.host}`);
@@ -228,11 +331,9 @@ const ws = new WebSocket(`${protocol}//${location.host}`);
 ws.onmessage = (event) => {
   const msg = JSON.parse(event.data);
   if (msg.type === 'statusUpdate') {
-    emotion = msg.data.emotion;
+    setEmotion(msg.data.emotion);
     task = msg.data.task;
     energy = msg.data.energy;
-    // Update eye target based on new emotion
-    targetOpenness = getEmotionOpenness();
   }
 };
 </script>
