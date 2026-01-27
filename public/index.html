@@ -424,8 +424,8 @@ function updateAnimation() {
     targetBpm = st.bpm[0] + Math.random() * (st.bpm[1] - st.bpm[0]);
     targetHype = st.hype[0] + Math.random() * (st.hype[1] - st.hype[0]);
   }
-  displayBpm = lerp(displayBpm, targetBpm, 0.03);
-  displayHype = lerp(displayHype, targetHype, 0.03);
+  displayBpm = lerp(displayBpm, targetBpm, 0.08);
+  displayHype = lerp(displayHype, targetHype, 0.08);
 }
 
 function scheduleNext() {
@@ -458,6 +458,10 @@ function setEmotion(newEmotion) {
     targetOpenness = targetProfile.eyeOpen;
     // Reset mouth based on new emotion's mouth chance
     targetMouth = Math.random() < targetProfile.mouthChance ? 1 : 0;
+    // Immediately retarget stats so BPM/hype react fast
+    const st = STATS[newEmotion] || STATS.idle;
+    targetBpm = st.bpm[0] + Math.random() * (st.bpm[1] - st.bpm[0]);
+    targetHype = st.hype[0] + Math.random() * (st.hype[1] - st.hype[0]);
     updateTitle();
   }
 }
