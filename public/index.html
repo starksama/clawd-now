@@ -29,24 +29,22 @@ const COLORS = {
   tired:    '#D9B5A8',
 };
 const EYE_COLOR = '#3D2817';
-const PIXEL = 6; // base pixel size, scales with screen
 
 // ── State ───────────────────────────────────────────
 let emotion = 'sleeping';
 let task = 'Resting peacefully...';
 let energy = 100;
 let tick = 0;
-let blinkTimer = 0;
-let blinkProgress = 0; // 0 = open, 1 = closed
-let blinkDir = 0; // 0 = idle, 1 = closing, -1 = opening
-let nextBlink = randomBlink();
-let particles = [];
-let bobPhase = 0;
-let mouthVisible = true;
-let mouthTimer = 0;
-let nextMouthToggle = 200 + Math.random() * 300;
 
-function randomBlink() { return 120 + Math.random() * 200; } // frames between blinks
+// Animation state — one unified "openness" drives everything
+let openness = 1.0;       // 0 = fully closed (flat bar), 1 = fully open (square)
+let targetOpenness = 1.0;
+let mouthShow = 0.0;      // 0 = hidden, 1 = fully visible
+let targetMouth = 0.0;
+
+// Scheduling
+let nextEvent = 60;        // frames until next animation event
+let currentPhase = 'idle'; // idle, closing, closed, opening
 
 // ── Canvas ──────────────────────────────────────────
 const canvas = document.getElementById('c');
@@ -60,16 +58,14 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-// ── Drawing ─────────────────────────────────────────
-function drawRect(x, y, w, h, color) {
-  ctx.fillStyle = color;
-  ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
-}
+// ── Smooth lerp ─────────────────────────────────────
+function lerp(a, b, t) { return a + (b - a) * t; }
 
+// ── Drawing ─────────────────────────────────────────
 function draw() {
   const W = canvas.width;
   const H = canvas.height;
-  const scale = Math.min(W, H) / 200; // everything relative to 200-unit grid
+  const scale = Math.min(W, H) / 200;
   const cx = W / 2;
   const cy = H / 2;
 
@@ -79,151 +75,151 @@ function draw() {
   ctx.fillRect(0, 0, W, H);
 
   // Gentle bob
-  bobPhase += 0.02;
-  const bobY = Math.sin(bobPhase) * scale * 3;
+  const bobY = Math.sin(tick * 0.015) * scale * 2.5;
 
-  // ── Eyes (taller than wide — portrait rectangles) ──
-  const eyeW = scale * 12;
-  const eyeFullH = scale * 18;
+  // Smooth eye drift (look around)
+  const lookX = Math.sin(tick * 0.008) * scale * 3 + Math.sin(tick * 0.003) * scale * 1.5;
+  const lookY = Math.cos(tick * 0.006) * scale * 1.5 + Math.sin(tick * 0.0025) * scale * 0.8;
+
+  // ── Eyes ──
+  const eyeW = scale * 14;
+  const eyeMaxH = scale * 16;   // fully open = nearly square
+  const eyeMinH = scale * 3;    // fully closed = flat bar
+  const eyeH = lerp(eyeMinH, eyeMaxH, openness);
   const eyeGap = scale * 20;
-  const eyeY = cy - scale * 10 + bobY;
+  const eyeY = cy - scale * 8 + bobY + lookY;
 
-  // Target height based on emotion
-  let targetH = eyeFullH;
-  if (emotion === 'sleeping') {
-    targetH = scale * 3;
-  } else if (emotion === 'tired') {
-    targetH = scale * 8;
-  }
+  ctx.fillStyle = EYE_COLOR;
+  // Left eye
+  ctx.fillRect(
+    Math.round(cx - eyeGap - eyeW / 2 + lookX),
+    Math.round(eyeY - eyeH / 2),
+    Math.round(eyeW),
+    Math.round(eyeH)
+  );
+  // Right eye
+  ctx.fillRect(
+    Math.round(cx + eyeGap - eyeW / 2 + lookX),
+    Math.round(eyeY - eyeH / 2),
+    Math.round(eyeW),
+    Math.round(eyeH)
+  );
 
-  // Smooth blink: lerp toward closed then back
-  const blinkLerp = 1 - blinkProgress; // 1 = open, 0 = closed
-  const finalEyeH = Math.max(scale * 2, targetH * blinkLerp);
+  // ── Mouth ── (coordinated with eyes)
+  if (mouthShow > 0.02) {
+    const mouthW = scale * 8;
+    const mouthMaxH = scale * 4;
+    const mouthH = mouthMaxH * mouthShow;
+    const mouthY = cy + scale * 16 + bobY + lookY * 0.3;
 
-  // Smooth look-around using layered sine waves (different speeds = natural drift)
-  const lookX = Math.sin(tick * 0.012) * scale * 3 + Math.sin(tick * 0.005) * scale * 1.5;
-  const lookY = Math.cos(tick * 0.009) * scale * 2 + Math.sin(tick * 0.004) * scale * 1;
-
-  const leftEyeX = cx - eyeGap - eyeW / 2;
-  const rightEyeX = cx + eyeGap - eyeW / 2;
-  const eyeTopY = eyeY - finalEyeH / 2;
-
-  // Draw eyes (solid dark blocks — no pupils, whole eye drifts to look around)
-  drawRect(leftEyeX + lookX, eyeTopY + lookY, eyeW, finalEyeH, EYE_COLOR);
-  drawRect(rightEyeX + lookX, eyeTopY + lookY, eyeW, finalEyeH, EYE_COLOR);
-
-  // ── Mouth ──
-  const mouthY = cy + scale * 16 + bobY + lookY * 0.3;
-  let mouthW = scale * 8;
-  let mouthH = scale * 3;
-
-  if (emotion === 'happy' || emotion === 'excited') {
-    mouthW = scale * 14;
-    mouthH = scale * 5;
-  } else if (emotion === 'stressed') {
-    mouthW = scale * 10;
-    mouthH = scale * 2;
-  } else if (emotion === 'sleeping' || emotion === 'tired') {
-    mouthW = scale * 6;
-    mouthH = scale * 1.5;
-  }
-
-  if (mouthVisible) {
-    drawRect(cx - mouthW / 2 + lookX * 0.3, mouthY - mouthH / 2, mouthW, mouthH, EYE_COLOR);
+    ctx.globalAlpha = mouthShow;
+    ctx.fillStyle = EYE_COLOR;
+    ctx.fillRect(
+      Math.round(cx - mouthW / 2 + lookX * 0.3),
+      Math.round(mouthY - mouthH / 2),
+      Math.round(mouthW),
+      Math.round(mouthH)
+    );
+    ctx.globalAlpha = 1;
   }
 
   // ── Floating Z's (sleeping) ──
-  if (emotion === 'sleeping') {
+  if (emotion === 'sleeping' && openness < 0.4) {
     const zSize = scale * 6;
     for (let i = 0; i < 3; i++) {
-      const phase = (tick * 0.01 + i * 2) % 6;
-      const zx = cx + scale * 30 + i * scale * 8;
-      const zy = cy - scale * 30 - phase * scale * 10;
+      const phase = (tick * 0.008 + i * 2) % 6;
+      const zx = cx + scale * 28 + i * scale * 8;
+      const zy = cy - scale * 25 - phase * scale * 10;
       const alpha = Math.max(0, 1 - phase / 6);
       const fontSize = Math.round(zSize * (1 + i * 0.3));
       ctx.font = `bold ${fontSize}px monospace`;
       ctx.fillStyle = EYE_COLOR;
-      ctx.globalAlpha = alpha;
+      ctx.globalAlpha = alpha * 0.6;
       ctx.fillText('z', zx, zy + bobY);
     }
     ctx.globalAlpha = 1;
   }
-
-  // ── Particles (reactions) ──
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    p.y -= 2;
-    p.life--;
-    p.x += p.vx;
-    ctx.globalAlpha = p.life / p.maxLife;
-    ctx.font = `${Math.round(scale * 8)}px sans-serif`;
-    ctx.fillText(p.emoji, p.x, p.y);
-    if (p.life <= 0) particles.splice(i, 1);
-  }
-  ctx.globalAlpha = 1;
 }
 
-// ── Animation Loop ──────────────────────────────────
+// ── Animation Logic ─────────────────────────────────
+function scheduleNext() {
+  // Random delay between events
+  nextEvent = 80 + Math.random() * 200;
+}
+
+function updateAnimation() {
+  // Smoothly move toward targets
+  openness = lerp(openness, targetOpenness, 0.04);
+  mouthShow = lerp(mouthShow, targetMouth, 0.05);
+
+  nextEvent--;
+  if (nextEvent <= 0) {
+    // Choose next animation phase
+    if (currentPhase === 'idle') {
+      // Sometimes blink (quick close-open)
+      // Sometimes do a slow squint
+      // Sometimes toggle mouth
+      const r = Math.random();
+
+      if (r < 0.35) {
+        // Quick blink
+        currentPhase = 'blinking';
+        targetOpenness = 0;
+        nextEvent = 12; // short hold
+      } else if (r < 0.55) {
+        // Slow squint (close halfway, hold, reopen)
+        currentPhase = 'squinting';
+        targetOpenness = 0.15;
+        nextEvent = 40 + Math.random() * 60;
+      } else if (r < 0.75) {
+        // Toggle mouth
+        targetMouth = targetMouth > 0.5 ? 0 : 1;
+        currentPhase = 'idle';
+        scheduleNext();
+      } else {
+        // Just wait
+        scheduleNext();
+      }
+    } else if (currentPhase === 'blinking') {
+      // Open back up
+      targetOpenness = getEmotionOpenness();
+      currentPhase = 'idle';
+      scheduleNext();
+    } else if (currentPhase === 'squinting') {
+      // Open back up, maybe change mouth
+      targetOpenness = getEmotionOpenness();
+      // Mouth often appears/disappears with squint transitions
+      if (Math.random() < 0.5) {
+        targetMouth = targetMouth > 0.5 ? 0 : 1;
+      }
+      currentPhase = 'idle';
+      scheduleNext();
+    }
+  }
+
+  // Mouth tends to hide when eyes are very closed
+  if (openness < 0.25 && targetMouth > 0.5) {
+    targetMouth = 0;
+  }
+}
+
+function getEmotionOpenness() {
+  switch (emotion) {
+    case 'sleeping': return 0.15;
+    case 'tired': return 0.45;
+    case 'stressed': return 0.7;
+    default: return 1.0;
+  }
+}
+
+// ── Main Loop ───────────────────────────────────────
 function loop() {
   tick++;
-
-  // Smooth blink logic
-  blinkTimer++;
-  if (blinkTimer >= nextBlink && blinkDir === 0) {
-    blinkDir = 1; // start closing
-  }
-  if (blinkDir === 1) {
-    blinkProgress += 0.15; // closing speed
-    if (blinkProgress >= 1) {
-      blinkProgress = 1;
-      blinkDir = -1; // start opening
-    }
-  } else if (blinkDir === -1) {
-    blinkProgress -= 0.1; // opening speed (slightly slower)
-    if (blinkProgress <= 0) {
-      blinkProgress = 0;
-      blinkDir = 0;
-      blinkTimer = 0;
-      nextBlink = randomBlink();
-    }
-  }
-
-  // Mouth occasionally disappears
-  mouthTimer++;
-  if (mouthTimer >= nextMouthToggle) {
-    mouthVisible = !mouthVisible;
-    mouthTimer = 0;
-    nextMouthToggle = mouthVisible
-      ? 250 + Math.random() * 400  // visible for a while
-      : 30 + Math.random() * 60;   // hidden briefly
-  }
-
+  updateAnimation();
   draw();
   requestAnimationFrame(loop);
 }
 loop();
-
-// ── Interactions ────────────────────────────────────
-canvas.addEventListener('click', (e) => {
-  // Spawn heart particle at click position
-  spawnParticle(e.clientX * devicePixelRatio, e.clientY * devicePixelRatio, '❤️');
-  interact('pat');
-});
-
-function spawnParticle(x, y, emoji) {
-  particles.push({
-    x, y, emoji,
-    vx: (Math.random() - 0.5) * 3,
-    life: 60,
-    maxLife: 60,
-  });
-}
-
-function interact(action) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'interact', action }));
-  }
-}
 
 // ── WebSocket ───────────────────────────────────────
 const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -235,18 +231,8 @@ ws.onmessage = (event) => {
     emotion = msg.data.emotion;
     task = msg.data.task;
     energy = msg.data.energy;
-  }
-  if (msg.type === 'interaction') {
-    const W = canvas.width;
-    const H = canvas.height;
-    const emojis = { pat: '❤️', tickle: '😂' };
-    for (let i = 0; i < 5; i++) {
-      spawnParticle(
-        W / 2 + (Math.random() - 0.5) * W * 0.4,
-        H / 2 + (Math.random() - 0.5) * H * 0.3,
-        emojis[msg.action] || '✨'
-      );
-    }
+    // Update eye target based on new emotion
+    targetOpenness = getEmotionOpenness();
   }
 };
 </script>
