@@ -1,5 +1,5 @@
 /**
- * Stark Signal Client
+ * clawd-now Signal Client
  *
  * Send emotional signals to the dashboard.
  * Non-blocking, silent failures — never interrupts main work.
@@ -8,11 +8,12 @@
  *   import { stark } from './client.js';
  *   await stark.sleeping();
  *   await stark.focused('Building analyzers...');
- *   await stark.happy('Tests passing!');
- *   await stark.excited('Ship it!');
+ *   await stark.thinking('Processing...');
+ *   await stark.texting('Typing reply...');
+ *   await stark.angry('Not cool!');
  */
 
-export type Emotion = 'sleeping' | 'idle' | 'focused' | 'happy' | 'excited' | 'stressed' | 'tired' | 'bored' | 'curious';
+export type Emotion = 'sleeping' | 'idle' | 'focused' | 'happy' | 'excited' | 'stressed' | 'tired' | 'bored' | 'curious' | 'thinking' | 'texting' | 'angry';
 
 interface StarkState {
   emotion: Emotion;
@@ -42,6 +43,9 @@ export class StarkSignal {
   async tired(task = 'Need a break...')             { return this.signal('tired', task); }
   async bored(task = 'This is tedious...')           { return this.signal('bored', task); }
   async curious(task = 'Hmm interesting...')          { return this.signal('curious', task); }
+  async thinking(task = 'Processing...')             { return this.signal('thinking', task); }
+  async texting(task = 'Typing reply...')            { return this.signal('texting', task); }
+  async angry(task = 'Not cool!')                   { return this.signal('angry', task); }
 
   // ── Signal ──────────────────────────────────────
   async signal(emotion: Emotion, task?: string, energy?: number): Promise<boolean> {
