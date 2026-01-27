@@ -37,7 +37,8 @@ let task = 'Resting peacefully...';
 let energy = 100;
 let tick = 0;
 let blinkTimer = 0;
-let isBlinking = false;
+let blinkProgress = 0; // 0 = open, 1 = closed
+let blinkDir = 0; // 0 = idle, 1 = closing, -1 = opening
 let nextBlink = randomBlink();
 let particles = [];
 let bobPhase = 0;
@@ -81,21 +82,23 @@ function draw() {
   bobPhase += 0.02;
   const bobY = Math.sin(bobPhase) * scale * 3;
 
-  // ── Eyes ──
-  const eyeW = scale * 16;
-  const eyeH = scale * 14;
-  const eyeGap = scale * 22;
+  // ── Eyes (taller than wide — portrait rectangles) ──
+  const eyeW = scale * 12;
+  const eyeFullH = scale * 18;
+  const eyeGap = scale * 20;
   const eyeY = cy - scale * 10 + bobY;
 
-  // Sleeping/tired = half-closed, blink = fully closed
-  let finalEyeH = eyeH;
-  if (isBlinking) {
-    finalEyeH = scale * 2;
-  } else if (emotion === 'sleeping') {
-    finalEyeH = scale * 3;
+  // Target height based on emotion
+  let targetH = eyeFullH;
+  if (emotion === 'sleeping') {
+    targetH = scale * 3;
   } else if (emotion === 'tired') {
-    finalEyeH = scale * 6;
+    targetH = scale * 8;
   }
+
+  // Smooth blink: lerp toward closed then back
+  const blinkLerp = 1 - blinkProgress; // 1 = open, 0 = closed
+  const finalEyeH = Math.max(scale * 2, targetH * blinkLerp);
 
   // Smooth look-around using layered sine waves (different speeds = natural drift)
   const lookX = Math.sin(tick * 0.012) * scale * 3 + Math.sin(tick * 0.005) * scale * 1.5;
@@ -164,15 +167,25 @@ function draw() {
 function loop() {
   tick++;
 
-  // Blink logic
+  // Smooth blink logic
   blinkTimer++;
-  if (blinkTimer >= nextBlink && !isBlinking) {
-    isBlinking = true;
-    setTimeout(() => {
-      isBlinking = false;
+  if (blinkTimer >= nextBlink && blinkDir === 0) {
+    blinkDir = 1; // start closing
+  }
+  if (blinkDir === 1) {
+    blinkProgress += 0.15; // closing speed
+    if (blinkProgress >= 1) {
+      blinkProgress = 1;
+      blinkDir = -1; // start opening
+    }
+  } else if (blinkDir === -1) {
+    blinkProgress -= 0.1; // opening speed (slightly slower)
+    if (blinkProgress <= 0) {
+      blinkProgress = 0;
+      blinkDir = 0;
       blinkTimer = 0;
       nextBlink = randomBlink();
-    }, 120);
+    }
   }
 
   // Mouth occasionally disappears
