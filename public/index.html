@@ -114,6 +114,32 @@ const PROFILES = {
     eventDelay: [120, 300],
     showZzz: false,
   },
+  bored: {
+    bg: '#CFAB9A',        // dull, muted
+    eyeOpen: 0.5,         // half-lidded, unamused
+    mouthChance: 0.3,
+    bobSpeed: 0.006,      // barely moving
+    bobAmount: 1,
+    driftSpeed: 0.015,    // eyes wander a LOT (looking around bored)
+    driftAmount: 5,
+    blinkRate: 0.2,
+    squintRate: 0.25,
+    eventDelay: [100, 250],
+    showZzz: false,
+  },
+  curious: {
+    bg: '#E0A080',        // warm, alert
+    eyeOpen: 1.0,         // wide eyes
+    mouthChance: 0.5,
+    bobSpeed: 0.02,
+    bobAmount: 3,
+    driftSpeed: 0.02,     // eyes dart around (looking at everything)
+    driftAmount: 6,
+    blinkRate: 0.3,
+    squintRate: 0.05,
+    eventDelay: [50, 120],
+    showZzz: false,
+  },
 };
 
 const EYE_COLOR = '#3D2817';
@@ -136,22 +162,22 @@ let currentPhase = 'idle';
 let currentProfile = { ...PROFILES.sleeping };
 let targetProfile = PROFILES.sleeping;
 
-// ── Heartbeat Monitor ───────────────────────────────
-const HEARTBEAT_LEN = 200;
-let heartbeat = new Array(HEARTBEAT_LEN).fill(0);
-let hbPhase = 0;
-let hbPulseTimer = 0;
-
-// Heartbeat profiles (pulse interval in frames, amplitude, noise)
-const HB_PROFILES = {
-  sleeping:  { interval: 90, amp: 0.3, noise: 0.02, speed: 0.5 },
-  idle:      { interval: 50, amp: 0.5, noise: 0.05, speed: 1.0 },
-  focused:   { interval: 35, amp: 0.7, noise: 0.03, speed: 1.2 },
-  happy:     { interval: 40, amp: 0.6, noise: 0.08, speed: 1.1 },
-  excited:   { interval: 20, amp: 1.0, noise: 0.1,  speed: 1.8 },
-  stressed:  { interval: 25, amp: 0.9, noise: 0.2,  speed: 1.5 },
-  tired:     { interval: 70, amp: 0.4, noise: 0.04, speed: 0.7 },
+// ── Stats (fun personality metrics) ──────────────────
+const STATS = {
+  sleeping:  { bpm: [45, 55],  hype: [5, 15],   vibe: '💤 zzz...' },
+  idle:      { bpm: [60, 70],  hype: [20, 40],  vibe: '😶 vibing' },
+  focused:   { bpm: [72, 82],  hype: [50, 70],  vibe: '🔒 locked in' },
+  happy:     { bpm: [75, 85],  hype: [60, 80],  vibe: '😊 feeling good' },
+  excited:   { bpm: [95, 120], hype: [85, 100], vibe: '🚀 LFG!!' },
+  stressed:  { bpm: [88, 105], hype: [30, 50],  vibe: '😰 sweating' },
+  tired:     { bpm: [50, 60],  hype: [10, 25],  vibe: '🥱 need coffee' },
+  bored:     { bpm: [55, 65],  hype: [5, 20],   vibe: '😑 meh...' },
+  curious:   { bpm: [70, 85],  hype: [55, 75],  vibe: '👀 interesting...' },
 };
+let displayBpm = 50;
+let displayHype = 10;
+let targetBpm = 50;
+let targetHype = 10;
 
 // ── Canvas ──────────────────────────────────────────
 const canvas = document.getElementById('c');
@@ -182,7 +208,7 @@ function draw() {
   // BIGGER face — use more of the screen
   const scale = Math.min(W, H) / 140;
   const cx = W / 2;
-  const cy = H * 0.42; // slightly above center to make room for stats
+  const cy = H * 0.4; // above center to make room for stats
 
   const p = currentProfile;
 
@@ -265,71 +291,34 @@ function draw() {
     ctx.globalAlpha = 1;
   }
 
-  // ── Heartbeat Monitor (bottom) ──
-  const hbY = H * 0.82;           // heartbeat line Y position
-  const hbH = H * 0.06;           // heartbeat height range
-  const hbLeft = W * 0.15;
-  const hbRight = W * 0.85;
-  const hbWidth = hbRight - hbLeft;
-  const step = hbWidth / HEARTBEAT_LEN;
+  // ── Fun Stats Panel (bottom) ──
+  const fontSize = Math.max(11, Math.round(scale * 2.2));
+  const smallFont = Math.max(9, Math.round(scale * 1.8));
+  const statsY = H * 0.85;
 
-  // Draw heartbeat line
-  ctx.strokeStyle = EYE_COLOR;
-  ctx.globalAlpha = 0.25;
-  ctx.lineWidth = Math.max(1.5, scale * 0.4);
-  ctx.beginPath();
-  for (let i = 0; i < heartbeat.length; i++) {
-    const x = hbLeft + i * step;
-    const y = hbY - heartbeat[i] * hbH;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  // Glow on recent pulse (last 20 samples brighter)
-  ctx.globalAlpha = 0.5;
-  ctx.lineWidth = Math.max(2, scale * 0.6);
-  ctx.beginPath();
-  const glowStart = Math.max(0, heartbeat.length - 25);
-  for (let i = glowStart; i < heartbeat.length; i++) {
-    const x = hbLeft + i * step;
-    const y = hbY - heartbeat[i] * hbH;
-    if (i === glowStart) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  // ── Stats Text (below heartbeat) ──
-  const statsY = H * 0.9;
-  const fontSize = Math.max(10, Math.round(scale * 2.5));
-
-  ctx.font = `${fontSize}px monospace`;
   ctx.fillStyle = EYE_COLOR;
-  ctx.globalAlpha = 0.3;
   ctx.textAlign = 'center';
 
-  // Emotion label + task
-  const emotionLabel = emotion.toUpperCase();
-  const displayTask = task.length > 40 ? task.slice(0, 37) + '...' : task;
-  ctx.fillText(`[ ${emotionLabel} ]  ${displayTask}`, cx, statsY);
+  // Row 1: ❤️ BPM    🔥 Hype
+  ctx.font = `${fontSize}px monospace`;
+  ctx.globalAlpha = 0.35;
+  const bpmStr = `♥ ${Math.round(displayBpm)} bpm`;
+  const hypeStr = `⚡ ${Math.round(displayHype)}%`;
+  const gap = scale * 20;
+  ctx.fillText(bpmStr, cx - gap, statsY);
+  ctx.fillText(hypeStr, cx + gap, statsY);
 
-  // Energy dots
-  const dotCount = 10;
-  const filledDots = Math.round(energy / 10);
-  const dotSize = Math.max(2, scale * 0.6);
-  const dotGap = dotSize * 2.5;
-  const dotsStartX = cx - (dotCount * dotGap) / 2;
-  const dotsY = statsY + fontSize * 1.2;
+  // Row 2: Vibe status
+  const st = STATS[emotion] || STATS.idle;
+  ctx.font = `${smallFont}px monospace`;
+  ctx.globalAlpha = 0.25;
+  ctx.fillText(st.vibe, cx, statsY + fontSize * 1.4);
 
-  for (let i = 0; i < dotCount; i++) {
-    ctx.globalAlpha = i < filledDots ? 0.35 : 0.1;
-    ctx.fillRect(
-      dotsStartX + i * dotGap,
-      dotsY,
-      dotSize, dotSize
-    );
-  }
+  // Row 3: Task
+  ctx.globalAlpha = 0.2;
+  const displayTask = task.length > 45 ? task.slice(0, 42) + '...' : task;
+  ctx.fillText(displayTask, cx, statsY + fontSize * 2.6);
+
   ctx.globalAlpha = 1;
   ctx.textAlign = 'start';
 }
@@ -385,24 +374,15 @@ function updateAnimation() {
     targetMouth = 0;
   }
 
-  // ── Heartbeat generation ──
-  const hbp = HB_PROFILES[emotion] || HB_PROFILES.idle;
-  hbPulseTimer++;
-
-  let val = 0;
-  // EKG-style pulse
-  if (hbPulseTimer % Math.round(hbp.interval) < 4) {
-    const t = hbPulseTimer % Math.round(hbp.interval);
-    if (t === 0) val = hbp.amp * 0.3;
-    else if (t === 1) val = hbp.amp * 1.0;  // peak
-    else if (t === 2) val = hbp.amp * -0.4; // dip
-    else if (t === 3) val = hbp.amp * 0.1;
+  // ── Stats fluctuation ──
+  const st = STATS[emotion] || STATS.idle;
+  // Slowly drift targets with slight randomness
+  if (tick % 30 === 0) {
+    targetBpm = st.bpm[0] + Math.random() * (st.bpm[1] - st.bpm[0]);
+    targetHype = st.hype[0] + Math.random() * (st.hype[1] - st.hype[0]);
   }
-  // Add noise
-  val += (Math.random() - 0.5) * hbp.noise;
-
-  heartbeat.push(val);
-  if (heartbeat.length > HEARTBEAT_LEN) heartbeat.shift();
+  displayBpm = lerp(displayBpm, targetBpm, 0.03);
+  displayHype = lerp(displayHype, targetHype, 0.03);
 }
 
 function scheduleNext() {
