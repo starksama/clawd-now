@@ -12,7 +12,7 @@
  *   await stark.excited('Ship it!');
  */
 
-export type Emotion = 'sleeping' | 'idle' | 'focused' | 'happy' | 'excited' | 'stressed' | 'tired';
+export type Emotion = 'sleeping' | 'idle' | 'focused' | 'happy' | 'excited' | 'stressed' | 'tired' | 'bored' | 'curious';
 
 interface StarkState {
   emotion: Emotion;
@@ -40,6 +40,8 @@ export class StarkSignal {
   async excited(task = 'Amazing!')                  { return this.signal('excited', task); }
   async stressed(task = 'Working through it...')    { return this.signal('stressed', task); }
   async tired(task = 'Need a break...')             { return this.signal('tired', task); }
+  async bored(task = 'This is tedious...')           { return this.signal('bored', task); }
+  async curious(task = 'Hmm interesting...')          { return this.signal('curious', task); }
 
   // ── Signal ──────────────────────────────────────
   async signal(emotion: Emotion, task?: string, energy?: number): Promise<boolean> {
