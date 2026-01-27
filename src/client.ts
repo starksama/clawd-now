@@ -13,7 +13,7 @@
  *   await stark.angry('Not cool!');
  */
 
-export type Emotion = 'sleeping' | 'idle' | 'focused' | 'happy' | 'excited' | 'stressed' | 'tired' | 'bored' | 'curious' | 'thinking' | 'texting' | 'angry';
+export type Emotion = 'sleeping' | 'idle' | 'focused' | 'happy' | 'excited' | 'stressed' | 'tired' | 'bored' | 'curious' | 'thinking' | 'texting' | 'angry' | 'inlove';
 
 interface StarkState {
   emotion: Emotion;
@@ -46,6 +46,7 @@ export class StarkSignal {
   async thinking(task = 'Processing...')             { return this.signal('thinking', task); }
   async texting(task = 'Typing reply...')            { return this.signal('texting', task); }
   async angry(task = 'Not cool!')                   { return this.signal('angry', task); }
+  async inlove(task = 'Smitten!')                   { return this.signal('inlove', task); }
 
   // ── Signal ──────────────────────────────────────
   async signal(emotion: Emotion, task?: string, energy?: number): Promise<boolean> {

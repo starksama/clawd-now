@@ -180,9 +180,37 @@ const PROFILES = {
     eventDelay: [40, 100], // fast events — actively composing
     showZzz: false,
   },
+  inlove: {
+    bg: '#E8889C',        // warm pink — lovestruck
+    eyeOpen: 1.0,         // wide open heart eyes
+    mouthChance: 0.85,    // big smile
+    bobSpeed: 0.018,      // gentle swaying
+    bobAmount: 3.5,       // dreamy bobs
+    driftSpeed: 0.006,    // slow, dreamy gaze
+    driftAmount: 2,
+    blinkRate: 0.12,      // barely blinks — mesmerized
+    squintRate: 0.03,
+    eventDelay: [80, 200],
+    showZzz: false,
+    showHearts: true,     // floating hearts like zzz's
+    heartEyes: true,      // draw heart-shaped eyes
+  },
 };
 
 const EYE_COLOR = '#3D2817';
+const HEART_COLOR = '#CC2244';
+
+// Heart pixel art (7x8 bitmap — fits eye dimensions perfectly)
+const HEART_SHAPE = [
+  [0,1,1,0,1,1,0],
+  [1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1],
+  [0,1,1,1,1,1,0],
+  [0,1,1,1,1,1,0],
+  [0,0,1,1,1,0,0],
+  [0,0,0,1,0,0,0],
+];
 
 // ── State ───────────────────────────────────────────
 let emotion = 'sleeping';
@@ -216,6 +244,7 @@ const STATS = {
   angry:     { bpm: [100, 130], hype: [70, 95],  vibe: '😤 don\'t test me' },
   thinking:  { bpm: [65, 78],  hype: [40, 60],  vibe: '🧠 processing...' },
   texting:   { bpm: [72, 85],  hype: [45, 65],  vibe: '💬 typing...' },
+  inlove:    { bpm: [90, 115], hype: [80, 100], vibe: '😍 in love!!' },
 };
 let displayBpm = 50;
 let displayHype = 10;
@@ -296,19 +325,48 @@ function draw() {
   const eyeY = cy - scale * 6 + bobY + driftY;
   const eyeX = cx + driftX + jitterX;
 
-  ctx.fillStyle = EYE_COLOR;
-  ctx.fillRect(
-    Math.round(eyeX - eyeGap - eyeW / 2),
-    Math.round(eyeY - eyeH / 2 + jitterY),
-    Math.round(eyeW),
-    Math.round(eyeH)
-  );
-  ctx.fillRect(
-    Math.round(eyeX + eyeGap - eyeW / 2),
-    Math.round(eyeY - eyeH / 2 + jitterY),
-    Math.round(eyeW),
-    Math.round(eyeH)
-  );
+  if (targetProfile.heartEyes && openness > 0.15) {
+    // ── Heart Eyes ── pixel art hearts in red!
+    const heartScale = openness; // shrink hearts when blinking
+    const pxSize = scale * 2 * heartScale;
+    const hRows = HEART_SHAPE.length;
+    const hCols = HEART_SHAPE[0].length;
+    const heartW = hCols * pxSize;
+    const heartH = hRows * pxSize;
+
+    ctx.fillStyle = HEART_COLOR;
+    for (const offsetX of [-eyeGap, eyeGap]) {
+      const hx = eyeX + offsetX - heartW / 2;
+      const hy = eyeY - heartH / 2 + jitterY;
+      for (let r = 0; r < hRows; r++) {
+        for (let c = 0; c < hCols; c++) {
+          if (HEART_SHAPE[r][c]) {
+            ctx.fillRect(
+              Math.round(hx + c * pxSize),
+              Math.round(hy + r * pxSize),
+              Math.ceil(pxSize),
+              Math.ceil(pxSize)
+            );
+          }
+        }
+      }
+    }
+  } else {
+    // ── Normal rectangular eyes ──
+    ctx.fillStyle = EYE_COLOR;
+    ctx.fillRect(
+      Math.round(eyeX - eyeGap - eyeW / 2),
+      Math.round(eyeY - eyeH / 2 + jitterY),
+      Math.round(eyeW),
+      Math.round(eyeH)
+    );
+    ctx.fillRect(
+      Math.round(eyeX + eyeGap - eyeW / 2),
+      Math.round(eyeY - eyeH / 2 + jitterY),
+      Math.round(eyeW),
+      Math.round(eyeH)
+    );
+  }
 
   // ── Mouth ──
   if (mouthShow > 0.02) {
@@ -342,6 +400,23 @@ function draw() {
       ctx.fillStyle = EYE_COLOR;
       ctx.globalAlpha = alpha * 0.5;
       ctx.fillText('z', zx, zy + bobY);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ── Floating Hearts (inlove) ──
+  if (targetProfile.showHearts) {
+    for (let i = 0; i < 4; i++) {
+      const phase = (tick * 0.006 + i * 1.8) % 7;
+      const side = i % 2 === 0 ? 1 : -1;
+      const hx = eyeX + side * (scale * 20 + i * scale * 5) + Math.sin(tick * 0.01 + i) * scale * 3;
+      const hy = cy - scale * 15 - phase * scale * 9;
+      const alpha = Math.max(0, 1 - phase / 7);
+      const fontSize = Math.round(scale * 4 * (0.8 + i * 0.15));
+      ctx.font = `${fontSize}px sans-serif`;
+      ctx.fillStyle = HEART_COLOR;
+      ctx.globalAlpha = alpha * 0.6;
+      ctx.fillText('♥', hx, hy + bobY);
     }
     ctx.globalAlpha = 1;
   }
