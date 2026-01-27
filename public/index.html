@@ -41,6 +41,9 @@ let isBlinking = false;
 let nextBlink = randomBlink();
 let particles = [];
 let bobPhase = 0;
+let mouthVisible = true;
+let mouthTimer = 0;
+let nextMouthToggle = 200 + Math.random() * 300;
 
 function randomBlink() { return 120 + Math.random() * 200; } // frames between blinks
 
@@ -102,32 +105,9 @@ function draw() {
   const rightEyeX = cx + eyeGap - eyeW / 2;
   const eyeTopY = eyeY - finalEyeH / 2;
 
-  // Draw eye backgrounds (dark)
+  // Draw eyes (solid dark blocks — no pupils, whole eye drifts to look around)
   drawRect(leftEyeX + lookX, eyeTopY + lookY, eyeW, finalEyeH, EYE_COLOR);
   drawRect(rightEyeX + lookX, eyeTopY + lookY, eyeW, finalEyeH, EYE_COLOR);
-
-  // Draw pupils (white highlight) — only when eyes are open enough
-  if (finalEyeH > scale * 5) {
-    const pupilW = scale * 5;
-    const pupilH = scale * 5;
-    // Pupil moves WITHIN the eye (smaller range, offset from look direction)
-    const pupilOffX = Math.sin(tick * 0.015) * scale * 2.5;
-    const pupilOffY = Math.cos(tick * 0.011) * scale * 1.5;
-    const pupilColor = '#F5D6C8'; // slightly lighter than background
-
-    // Left pupil
-    drawRect(
-      leftEyeX + lookX + eyeW / 2 - pupilW / 2 + pupilOffX,
-      eyeTopY + lookY + finalEyeH / 2 - pupilH / 2 + pupilOffY,
-      pupilW, pupilH, pupilColor
-    );
-    // Right pupil
-    drawRect(
-      rightEyeX + lookX + eyeW / 2 - pupilW / 2 + pupilOffX,
-      eyeTopY + lookY + finalEyeH / 2 - pupilH / 2 + pupilOffY,
-      pupilW, pupilH, pupilColor
-    );
-  }
 
   // ── Mouth ──
   const mouthY = cy + scale * 16 + bobY + lookY * 0.3;
@@ -145,7 +125,9 @@ function draw() {
     mouthH = scale * 1.5;
   }
 
-  drawRect(cx - mouthW / 2 + lookX * 0.3, mouthY - mouthH / 2, mouthW, mouthH, EYE_COLOR);
+  if (mouthVisible) {
+    drawRect(cx - mouthW / 2 + lookX * 0.3, mouthY - mouthH / 2, mouthW, mouthH, EYE_COLOR);
+  }
 
   // ── Floating Z's (sleeping) ──
   if (emotion === 'sleeping') {
@@ -191,6 +173,16 @@ function loop() {
       blinkTimer = 0;
       nextBlink = randomBlink();
     }, 120);
+  }
+
+  // Mouth occasionally disappears
+  mouthTimer++;
+  if (mouthTimer >= nextMouthToggle) {
+    mouthVisible = !mouthVisible;
+    mouthTimer = 0;
+    nextMouthToggle = mouthVisible
+      ? 250 + Math.random() * 400  // visible for a while
+      : 30 + Math.random() * 60;   // hidden briefly
   }
 
   draw();
