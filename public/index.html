@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Stark</title>
+  <title>clawd: zzz...</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; }
@@ -296,12 +296,12 @@ function draw() {
   const smallFont = Math.max(9, Math.round(scale * 1.8));
   const statsY = H * 0.85;
 
-  ctx.fillStyle = EYE_COLOR;
+  ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
 
   // Row 1: ❤️ BPM    🔥 Hype
   ctx.font = `${fontSize}px monospace`;
-  ctx.globalAlpha = 0.35;
+  ctx.globalAlpha = 0.55;
   const bpmStr = `♥ ${Math.round(displayBpm)} bpm`;
   const hypeStr = `⚡ ${Math.round(displayHype)}%`;
   const gap = scale * 20;
@@ -311,11 +311,11 @@ function draw() {
   // Row 2: Vibe status
   const st = STATS[emotion] || STATS.idle;
   ctx.font = `${smallFont}px monospace`;
-  ctx.globalAlpha = 0.25;
+  ctx.globalAlpha = 0.45;
   ctx.fillText(st.vibe, cx, statsY + fontSize * 1.4);
 
   // Row 3: Task
-  ctx.globalAlpha = 0.2;
+  ctx.globalAlpha = 0.35;
   const displayTask = task.length > 45 ? task.slice(0, 42) + '...' : task;
   ctx.fillText(displayTask, cx, statsY + fontSize * 2.6);
 
@@ -399,6 +399,14 @@ function loop() {
 }
 loop();
 
+// ── Tab Title ────────────────────────────────────────
+function updateTitle() {
+  const st = STATS[emotion] || STATS.idle;
+  // Strip emoji prefix from vibe for clean title
+  const vibe = st.vibe.replace(/^[\p{Emoji}\uFE0F\u200D]+\s*/u, '');
+  document.title = `clawd: ${vibe}`;
+}
+
 // ── Emotion Change ──────────────────────────────────
 function setEmotion(newEmotion) {
   if (PROFILES[newEmotion]) {
@@ -407,6 +415,7 @@ function setEmotion(newEmotion) {
     targetOpenness = targetProfile.eyeOpen;
     // Reset mouth based on new emotion's mouth chance
     targetMouth = Math.random() < targetProfile.mouthChance ? 1 : 0;
+    updateTitle();
   }
 }
 

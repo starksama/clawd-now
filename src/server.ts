@@ -93,6 +93,6 @@ function resetAutoSleep() {
 
 // ── Start ───────────────────────────────────────────
 server.listen(PORT, () => {
-  console.log(`\n🤖 Stark Dashboard → http://localhost:${PORT}`);
+  console.log(`\n🤖 clawd-now → http://localhost:${PORT}`);
   console.log(`   Auto-sleep after ${AUTO_SLEEP_MS / 1000}s of no signals\n`);
 });

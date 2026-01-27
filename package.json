@@ -1,7 +1,7 @@
 {
-  "name": "clawd-dashboard",
-  "version": "0.2.0",
-  "description": "Stark's emotional face — cute pixel art bot dashboard",
+  "name": "clawd-now",
+  "version": "0.3.0",
+  "description": "clawd-now — live status face",
   "type": "module",
   "scripts": {
     "dev": "tsx src/server.ts",
