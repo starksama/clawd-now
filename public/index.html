@@ -140,6 +140,32 @@ const PROFILES = {
     eventDelay: [50, 120],
     showZzz: false,
   },
+  thinking: {
+    bg: '#D4A08E',        // muted warm — contemplative
+    eyeOpen: 0.45,        // slightly squinted, processing
+    mouthChance: 0.05,    // mouth closed — concentrating
+    bobSpeed: 0.012,      // slow, steady
+    bobAmount: 1.8,
+    driftSpeed: 0.005,    // eyes drift slowly (lost in thought)
+    driftAmount: 2,
+    blinkRate: 0.1,       // fewer blinks
+    squintRate: 0.2,      // squints while thinking
+    eventDelay: [150, 350],
+    showZzz: false,
+  },
+  texting: {
+    bg: '#E0926E',        // warm, active
+    eyeOpen: 0.8,         // slightly focused
+    mouthChance: 0.6,     // mouth moves — talking/typing
+    bobSpeed: 0.03,       // quick little bobs
+    bobAmount: 2,
+    driftSpeed: 0.004,    // eyes mostly forward (reading/writing)
+    driftAmount: 1,
+    blinkRate: 0.25,
+    squintRate: 0.08,
+    eventDelay: [40, 100], // fast events — actively composing
+    showZzz: false,
+  },
 };
 
 const EYE_COLOR = '#3D2817';
@@ -173,6 +199,8 @@ const STATS = {
   tired:     { bpm: [50, 60],  hype: [10, 25],  vibe: '🥱 need coffee' },
   bored:     { bpm: [55, 65],  hype: [5, 20],   vibe: '😑 meh...' },
   curious:   { bpm: [70, 85],  hype: [55, 75],  vibe: '👀 interesting...' },
+  thinking:  { bpm: [65, 78],  hype: [40, 60],  vibe: '🧠 processing...' },
+  texting:   { bpm: [72, 85],  hype: [45, 65],  vibe: '💬 typing...' },
 };
 let displayBpm = 50;
 let displayHype = 10;
