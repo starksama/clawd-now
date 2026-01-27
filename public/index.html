@@ -226,6 +226,18 @@ let targetHype = 10;
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 
+// ── Hover Detection ─────────────────────────────────
+let mouseY = 0;
+let isHoveringStats = false;
+
+canvas.addEventListener('mousemove', (e) => {
+  mouseY = e.clientY / window.innerHeight;
+  isHoveringStats = mouseY > 0.7; // bottom 30% of screen
+});
+canvas.addEventListener('mouseleave', () => {
+  isHoveringStats = false;
+});
+
 function resize() {
   canvas.width = window.innerWidth * devicePixelRatio;
   canvas.height = window.innerHeight * devicePixelRatio;
@@ -335,32 +347,37 @@ function draw() {
   }
 
   // ── Fun Stats Panel (bottom) ──
-  const fontSize = Math.max(11, Math.round(scale * 2.2));
-  const smallFont = Math.max(9, Math.round(scale * 1.8));
-  const statsY = H * 0.85;
+  const fontSize = Math.max(13, Math.round(scale * 2.8));
+  const smallFont = Math.max(11, Math.round(scale * 2.3));
+  const statsY = H * 0.83;
+
+  // Hover boost — pure white when mouse is near stats
+  const statsAlpha = isHoveringStats ? 1.0 : 0.7;
+  const vibeAlpha = isHoveringStats ? 0.95 : 0.6;
+  const taskAlpha = isHoveringStats ? 0.9 : 0.5;
 
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
 
   // Row 1: ❤️ BPM    🔥 Hype
-  ctx.font = `${fontSize}px monospace`;
-  ctx.globalAlpha = 0.55;
+  ctx.font = `bold ${fontSize}px monospace`;
+  ctx.globalAlpha = statsAlpha;
   const bpmStr = `♥ ${Math.round(displayBpm)} bpm`;
   const hypeStr = `⚡ ${Math.round(displayHype)}%`;
-  const gap = scale * 20;
+  const gap = scale * 22;
   ctx.fillText(bpmStr, cx - gap, statsY);
   ctx.fillText(hypeStr, cx + gap, statsY);
 
   // Row 2: Vibe status
   const st = STATS[emotion] || STATS.idle;
   ctx.font = `${smallFont}px monospace`;
-  ctx.globalAlpha = 0.45;
-  ctx.fillText(st.vibe, cx, statsY + fontSize * 1.4);
+  ctx.globalAlpha = vibeAlpha;
+  ctx.fillText(st.vibe, cx, statsY + fontSize * 1.5);
 
   // Row 3: Task
-  ctx.globalAlpha = 0.35;
-  const displayTask = task.length > 45 ? task.slice(0, 42) + '...' : task;
-  ctx.fillText(displayTask, cx, statsY + fontSize * 2.6);
+  ctx.globalAlpha = taskAlpha;
+  const displayTask = task.length > 50 ? task.slice(0, 47) + '...' : task;
+  ctx.fillText(displayTask, cx, statsY + fontSize * 2.8);
 
   ctx.globalAlpha = 1;
   ctx.textAlign = 'start';
