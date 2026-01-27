@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🤖 Clawd</title>
+  <title>🤖 Stark</title>
   <style>
     * {
       margin: 0;
@@ -22,16 +22,17 @@
       position: relative;
     }
 
-    /* Full-screen face container */
-    .face-container {
+    /* Main container */
+    .container {
       position: relative;
       width: 90vmin;
       height: 90vmin;
-      max-width: 800px;
-      max-height: 800px;
+      max-width: 700px;
+      max-height: 700px;
+      cursor: pointer;
     }
 
-    /* Main face circle */
+    /* Face - the main thing */
     .face {
       width: 100%;
       height: 100%;
@@ -40,6 +41,10 @@
       position: relative;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
       animation: breathe 4s ease-in-out infinite;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     @keyframes breathe {
@@ -47,7 +52,7 @@
       50% { transform: scale(1.03); }
     }
 
-    /* Eyes container */
+    /* Eyes */
     .eyes {
       position: absolute;
       top: 35%;
@@ -58,7 +63,6 @@
       z-index: 10;
     }
 
-    /* Individual eye */
     .eye {
       width: 12vmin;
       height: 16vmin;
@@ -66,10 +70,8 @@
       border-radius: 20%;
       position: relative;
       overflow: hidden;
-      box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.3);
     }
 
-    /* Pupil (moves with eye tracking) */
     .pupil {
       width: 5vmin;
       height: 7vmin;
@@ -82,7 +84,7 @@
       transition: all 0.1s ease-out;
     }
 
-    /* Mouth */
+    /* Mouth SVG */
     .mouth {
       position: absolute;
       bottom: 25%;
@@ -102,223 +104,174 @@
       stroke-width: 0.8;
       fill: none;
       stroke-linecap: round;
-      stroke-linejoin: round;
       transition: d 0.3s ease;
     }
 
-    /* Emotions - eye & mouth changes */
-    .face.focused .eye {
-      animation: focusedBlink 3s ease-in-out infinite;
+    /* Emotion states */
+    .face.focused {
+      animation: focusedBreathe 2.5s ease-in-out infinite;
     }
 
-    .face.happy .mouth-path {
-      d: path('M 2 3 Q 4 6 8 3');
+    .face.happy {
+      animation: happyBounce 0.8s ease-in-out;
     }
 
     .face.excited {
       animation: excitedPulse 0.5s ease-in-out infinite;
     }
 
-    @keyframes excitedPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
     .face.stressed {
-      animation: stressShake 0.15s ease-in-out infinite;
-    }
-
-    @keyframes stressShake {
-      0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(-1deg); }
-      75% { transform: rotate(1deg); }
+      animation: stressShake 0.2s ease-in-out infinite;
     }
 
     .face.tired {
-      opacity: 0.8;
+      opacity: 0.7;
+      animation: tiredBreathe 5s ease-in-out infinite;
     }
 
     .face.sleeping {
       animation: sleepPulse 2s ease-in-out infinite;
     }
 
+    @keyframes focusedBreathe {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.01); }
+    }
+
+    @keyframes happyBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    @keyframes excitedPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    @keyframes stressShake {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-2deg); }
+      75% { transform: rotate(2deg); }
+    }
+
+    @keyframes tiredBreathe {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
     @keyframes sleepPulse {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
+      50% { opacity: 0.75; }
     }
 
-    @keyframes focusedBlink {
-      0%, 10%, 15%, 100% { }
-      12% { transform: scaleY(0.1); }
+    /* Context panel - subtle */
+    .context {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      padding: 15px 30px;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 15;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     }
 
-    /* Hover menu */
-    .menu {
+    .container:hover .context {
+      opacity: 1;
+    }
+
+    .task-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .energy-bar {
+      width: 120px;
+      height: 4px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+
+    .energy-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #FFB3BA, #FF9A9E);
+      transition: width 0.3s ease;
+      border-radius: 2px;
+    }
+
+    /* Interaction buttons - only on hover */
+    .buttons {
       position: absolute;
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 50px;
-      padding: 15px 30px;
       display: flex;
-      gap: 20px;
-      align-items: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      gap: 15px;
       opacity: 0;
       pointer-events: none;
       transition: all 0.3s ease;
-      z-index: 20;
+      z-index: 15;
     }
 
-    .face-container:hover .menu {
+    .container:hover .buttons {
       opacity: 1;
       pointer-events: auto;
       bottom: 40px;
     }
 
-    /* Status bar in menu */
-    .status-info {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-    }
-
-    .stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-    }
-
-    .stat-value {
-      font-weight: 700;
-      font-size: 16px;
-      color: #FF9A9E;
-    }
-
-    .stat-label {
-      font-size: 10px;
-      color: #999;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .divider {
-      width: 1px;
-      height: 30px;
-      background: #eee;
-    }
-
-    /* Interactive buttons */
-    .actions {
-      display: flex;
-      gap: 10px;
-    }
-
     button {
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       border-radius: 50%;
       border: none;
-      background: #FFB3BA;
+      background: white;
       cursor: pointer;
-      font-size: 18px;
-      transition: all 0.3s ease;
+      font-size: 20px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     button:hover {
-      transform: scale(1.15);
-      background: #FF9A9E;
+      transform: scale(1.2);
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
     }
 
     button:active {
-      transform: scale(0.95);
+      transform: scale(0.9);
     }
 
-    /* Floating particles */
+    /* Floating particles for reactions */
     .particle {
       position: fixed;
-      font-size: 30px;
+      font-size: 40px;
       pointer-events: none;
-      animation: float-up 1.5s ease-out forwards;
+      animation: float-up 2s ease-out forwards;
+      z-index: 100;
     }
 
     @keyframes float-up {
       0% {
         opacity: 1;
-        transform: translateY(0) translateX(0);
+        transform: translateY(0) translateX(0) scale(1);
       }
       100% {
         opacity: 0;
-        transform: translateY(-100px) translateX(var(--tx, 0px));
+        transform: translateY(-150px) translateX(var(--tx, 0px)) scale(0.5);
       }
-    }
-
-    /* Energy & Progress (subtle) */
-    .energy-ring {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(5px);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .face-container:hover .energy-ring {
-      opacity: 1;
-    }
-
-    .energy-value {
-      font-size: 20px;
-      font-weight: 700;
-      color: #FF6B6B;
-    }
-
-    /* Progress ring */
-    .progress-ring {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      width: 60px;
-      height: 60px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .face-container:hover .progress-ring {
-      opacity: 1;
-    }
-
-    .progress-ring-circle {
-      transform: rotate(-90deg);
-      transform-origin: 50% 50%;
-    }
-
-    .progress-ring-circle circle {
-      transition: stroke-dashoffset 0.3s ease;
-      stroke: #FFB3BA;
-      fill: transparent;
-      stroke-width: 3;
-      stroke-linecap: round;
-    }
-
-    .progress-ring-bg circle {
-      stroke: rgba(255, 255, 255, 0.3);
     }
 
     /* Responsive */
@@ -332,27 +285,25 @@
         height: 14vmin;
       }
 
-      .menu {
-        padding: 12px 20px;
-        gap: 15px;
-        font-size: 12px;
-      }
-
-      .stat-value {
-        font-size: 14px;
-      }
-
       button {
-        width: 35px;
-        height: 35px;
-        font-size: 16px;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+      }
+
+      .context {
+        padding: 12px 20px;
+      }
+
+      .task-name {
+        font-size: 12px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="face-container">
-    <!-- Main face -->
+  <div class="container">
+    <!-- Main expressive face -->
     <div class="face" id="face">
       <!-- Eyes -->
       <div class="eyes">
@@ -372,45 +323,19 @@
       </div>
     </div>
 
-    <!-- Energy indicator (hover) -->
-    <div class="energy-ring">
-      <div class="energy-value" id="energy">100%</div>
+    <!-- Context: What I'm doing (appears on hover) -->
+    <div class="context">
+      <div class="task-name" id="task">Just thinking...</div>
+      <div class="energy-bar">
+        <div class="energy-fill" id="energy-fill" style="width: 100%"></div>
+      </div>
     </div>
 
-    <!-- Progress ring (hover) -->
-    <svg class="progress-ring" width="60" height="60">
-      <g class="progress-ring-bg">
-        <circle cx="30" cy="30" r="25" />
-      </g>
-      <g class="progress-ring-circle">
-        <circle id="progress-circle" cx="30" cy="30" r="25" />
-      </g>
-    </svg>
-
-    <!-- Hover menu with stats & interactions -->
-    <div class="menu">
-      <div class="status-info">
-        <div class="stat">
-          <div class="stat-value" id="progress">50%</div>
-          <div class="stat-label">Progress</div>
-        </div>
-        <div class="divider"></div>
-        <div class="stat">
-          <div class="stat-value" id="phase">Phase 1</div>
-          <div class="stat-label">Current</div>
-        </div>
-        <div class="divider"></div>
-        <div class="stat">
-          <div class="stat-value" id="task-name">Building</div>
-          <div class="stat-label">Task</div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button onclick="interact('pat')" title="Pat">👋</button>
-        <button onclick="interact('coffee')" title="Coffee">☕</button>
-        <button onclick="interact('tickle')" title="Tickle">😄</button>
-      </div>
+    <!-- Interaction buttons (appear on hover) -->
+    <div class="buttons">
+      <button onclick="interact('pat')" title="Pat me">👋</button>
+      <button onclick="interact('coffee')" title="Give coffee">☕</button>
+      <button onclick="interact('tickle')" title="Tickle">😄</button>
     </div>
   </div>
 
@@ -421,12 +346,8 @@
 
     const face = document.getElementById('face');
     const pupils = [document.getElementById('pupil-1'), document.getElementById('pupil-2')];
-    const progressCircle = document.getElementById('progress-circle');
-
-    // Initialize progress circle
-    const circumference = 2 * Math.PI * 25;
-    progressCircle.style.strokeDasharray = circumference;
-    progressCircle.style.strokeDashoffset = circumference;
+    const taskEl = document.getElementById('task');
+    const energyFill = document.getElementById('energy-fill');
 
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
@@ -439,21 +360,16 @@
     };
 
     function updateStatus(status) {
-      // Update emotion
+      // Update emotion - PRIMARY
       face.className = `face ${status.emotion}`;
 
-      // Update UI
-      document.getElementById('progress').textContent = `${status.progress}%`;
-      document.getElementById('energy').textContent = `${status.energy}%`;
-      document.getElementById('phase').textContent = status.phase.split(':')[0].trim();
-      document.getElementById('task-name').textContent = status.task.substring(0, 15);
-
-      // Update progress ring
-      const offset = circumference - (status.progress / 100) * circumference;
-      progressCircle.style.strokeDashoffset = offset;
+      // Update context info - SECONDARY
+      taskEl.textContent = status.task || 'Just existing...';
+      
+      // Energy bar
+      energyFill.style.width = `${status.energy}%`;
 
       // Dynamic background based on emotion
-      const faceEl = document.querySelector('.face');
       const emotionBgMap = {
         focused: 'radial-gradient(circle at 30% 30%, #FFB3BA, #FFC0CB)',
         happy: 'radial-gradient(circle at 30% 30%, #FFD1DC, #FFE0E6)',
@@ -462,7 +378,7 @@
         tired: 'radial-gradient(circle at 30% 30%, #FFD1DC, #E8B4C0)',
         sleeping: 'radial-gradient(circle at 30% 30%, #FFE0E6, #FFD1DC)',
       };
-      faceEl.style.background = emotionBgMap[status.emotion] || emotionBgMap.focused;
+      face.style.background = emotionBgMap[status.emotion] || emotionBgMap.focused;
     }
 
     function interact(action) {
@@ -483,41 +399,41 @@
       particle.textContent = emoji;
       particle.style.left = (Math.random() * 80 + 10) + '%';
       particle.style.top = (Math.random() * 60 + 20) + '%';
-      particle.style.setProperty('--tx', (Math.random() - 0.5) * 50 + 'px');
+      particle.style.setProperty('--tx', (Math.random() - 0.5) * 80 + 'px');
       document.body.appendChild(particle);
 
-      setTimeout(() => particle.remove(), 1500);
+      setTimeout(() => particle.remove(), 2000);
     }
 
-    // Eye tracking - smooth movement
+    // Eye tracking - smooth, natural movement
     document.addEventListener('mousemove', (e) => {
-      const faceContainer = document.querySelector('.face-container');
-      const rect = faceContainer.getBoundingClientRect();
-      const faceX = rect.left + rect.width / 2;
-      const faceY = rect.top + rect.height / 2;
+      const container = document.querySelector('.container');
+      const rect = container.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
 
-      const angle = Math.atan2(e.clientY - faceY, e.clientX - faceX);
-      const distance = 3; // vmin distance for pupil movement
+      const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+      const distance = 3.5;
 
       pupils.forEach((pupil) => {
-        const eyeWidth = rect.width * 0.15; // eye is ~15% of face
-        const maxX = eyeWidth * 0.3; // can move ~30% within eye
-        const maxY = eyeWidth * 0.4;
-
-        const x = Math.cos(angle) * Math.min(distance, maxX);
-        const y = Math.sin(angle) * Math.min(distance, maxY);
-
+        const x = Math.cos(angle) * distance;
+        const y = Math.sin(angle) * distance;
         pupil.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
       });
     });
 
-    // Periodic blinking
+    // Occasional blinking
     setInterval(() => {
-      if (Math.random() > 0.95) {
-        face.style.animation = 'none';
+      if (Math.random() > 0.97) {
+        const eyes = document.querySelectorAll('.eye');
+        eyes.forEach(eye => {
+          eye.style.transform = 'scaleY(0.05)';
+        });
         setTimeout(() => {
-          face.style.animation = '';
-        }, 150);
+          eyes.forEach(eye => {
+            eye.style.transform = '';
+          });
+        }, 100);
       }
     }, 1000);
   </script>
