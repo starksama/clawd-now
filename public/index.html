@@ -50,15 +50,15 @@ const PROFILES = {
   },
   focused: {
     bg: '#D4785E',
-    eyeOpen: 1.0,
-    mouthChance: 0.1,     // rarely shows mouth (concentrating)
+    eyeOpen: 0.35,        // 咪咪眼 — squinty, determined
+    mouthChance: 0.08,    // rarely shows mouth (concentrating)
     bobSpeed: 0.025,      // tighter breathing
     bobAmount: 1.2,       // less movement
     driftSpeed: 0.003,    // barely looks around (locked in)
     driftAmount: 0.8,
-    blinkRate: 0.15,      // less blinking
-    squintRate: 0.05,
-    eventDelay: [150, 350], // fewer events
+    blinkRate: 0.08,      // barely blinks (already squinting)
+    squintRate: 0.03,
+    eventDelay: [200, 400], // calm, fewer events
     showZzz: false,
   },
   happy: {
@@ -214,8 +214,10 @@ function draw() {
 
   // ── Mouth ──
   if (mouthShow > 0.02) {
-    const mouthW = scale * 8;
-    const mouthMaxH = scale * 4;
+    // Excited = open mouth (bigger!)
+    const isExcited = emotion === 'excited';
+    const mouthW = isExcited ? scale * 10 : scale * 8;
+    const mouthMaxH = isExcited ? scale * 10 : scale * 4;
     const mouthH = mouthMaxH * mouthShow;
     const mouthY = cy + scale * 16 + bobY + driftY * 0.3;
 
