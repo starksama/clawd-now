@@ -1,0 +1,18 @@
+#!/bin/bash
+# Signal Stark's emotional state
+# Usage: stark-signal <emotion> [task]
+# Example: stark-signal focused "Building SmartScore..."
+#          stark-signal sleeping
+
+DASHBOARD_URL="${STARK_DASHBOARD:-http://localhost:3001}"
+
+emotion="${1:-idle}"
+task="${2:-}"
+
+body="{\"emotion\":\"$emotion\""
+[ -n "$task" ] && body="$body,\"task\":\"$task\""
+body="$body}"
+
+curl -s -X POST "$DASHBOARD_URL/api/update" \
+  -H 'Content-Type: application/json' \
+  -d "$body" > /dev/null 2>&1 &

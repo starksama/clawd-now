@@ -216,8 +216,8 @@ function draw() {
   if (mouthShow > 0.02) {
     // Excited = open mouth (bigger!)
     const isExcited = emotion === 'excited';
-    const mouthW = isExcited ? scale * 10 : scale * 8;
-    const mouthMaxH = isExcited ? scale * 10 : scale * 4;
+    const mouthW = isExcited ? scale * 9 : scale * 8;
+    const mouthMaxH = isExcited ? scale * 7 : scale * 4;
     const mouthH = mouthMaxH * mouthShow;
     const mouthY = cy + scale * 16 + bobY + driftY * 0.3;
 
