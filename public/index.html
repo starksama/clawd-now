@@ -80,25 +80,57 @@ function draw() {
 
   // ── Eyes ──
   const eyeW = scale * 16;
-  const eyeH = isBlinking ? scale * 2 : scale * 14;
+  const eyeH = scale * 14;
   const eyeGap = scale * 22;
   const eyeY = cy - scale * 10 + bobY;
 
-  // Sleeping = half-closed eyes (shorter)
+  // Sleeping/tired = half-closed, blink = fully closed
   let finalEyeH = eyeH;
-  if (emotion === 'sleeping' && !isBlinking) {
+  if (isBlinking) {
+    finalEyeH = scale * 2;
+  } else if (emotion === 'sleeping') {
     finalEyeH = scale * 3;
-  } else if (emotion === 'tired' && !isBlinking) {
+  } else if (emotion === 'tired') {
     finalEyeH = scale * 6;
   }
 
-  // Left eye
-  drawRect(cx - eyeGap - eyeW / 2, eyeY - finalEyeH / 2, eyeW, finalEyeH, EYE_COLOR);
-  // Right eye
-  drawRect(cx + eyeGap - eyeW / 2, eyeY - finalEyeH / 2, eyeW, finalEyeH, EYE_COLOR);
+  // Smooth look-around using layered sine waves (different speeds = natural drift)
+  const lookX = Math.sin(tick * 0.012) * scale * 3 + Math.sin(tick * 0.005) * scale * 1.5;
+  const lookY = Math.cos(tick * 0.009) * scale * 2 + Math.sin(tick * 0.004) * scale * 1;
+
+  const leftEyeX = cx - eyeGap - eyeW / 2;
+  const rightEyeX = cx + eyeGap - eyeW / 2;
+  const eyeTopY = eyeY - finalEyeH / 2;
+
+  // Draw eye backgrounds (dark)
+  drawRect(leftEyeX + lookX, eyeTopY + lookY, eyeW, finalEyeH, EYE_COLOR);
+  drawRect(rightEyeX + lookX, eyeTopY + lookY, eyeW, finalEyeH, EYE_COLOR);
+
+  // Draw pupils (white highlight) — only when eyes are open enough
+  if (finalEyeH > scale * 5) {
+    const pupilW = scale * 5;
+    const pupilH = scale * 5;
+    // Pupil moves WITHIN the eye (smaller range, offset from look direction)
+    const pupilOffX = Math.sin(tick * 0.015) * scale * 2.5;
+    const pupilOffY = Math.cos(tick * 0.011) * scale * 1.5;
+    const pupilColor = '#F5D6C8'; // slightly lighter than background
+
+    // Left pupil
+    drawRect(
+      leftEyeX + lookX + eyeW / 2 - pupilW / 2 + pupilOffX,
+      eyeTopY + lookY + finalEyeH / 2 - pupilH / 2 + pupilOffY,
+      pupilW, pupilH, pupilColor
+    );
+    // Right pupil
+    drawRect(
+      rightEyeX + lookX + eyeW / 2 - pupilW / 2 + pupilOffX,
+      eyeTopY + lookY + finalEyeH / 2 - pupilH / 2 + pupilOffY,
+      pupilW, pupilH, pupilColor
+    );
+  }
 
   // ── Mouth ──
-  const mouthY = cy + scale * 16 + bobY;
+  const mouthY = cy + scale * 16 + bobY + lookY * 0.3;
   let mouthW = scale * 8;
   let mouthH = scale * 3;
 
@@ -113,7 +145,7 @@ function draw() {
     mouthH = scale * 1.5;
   }
 
-  drawRect(cx - mouthW / 2, mouthY - mouthH / 2, mouthW, mouthH, EYE_COLOR);
+  drawRect(cx - mouthW / 2 + lookX * 0.3, mouthY - mouthH / 2, mouthW, mouthH, EYE_COLOR);
 
   // ── Floating Z's (sleeping) ──
   if (emotion === 'sleeping') {
