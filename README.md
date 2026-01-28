@@ -1,114 +1,79 @@
 # clawd-now 🤖
 
-Live status face — a minimalist pixel-art companion that shows what clawd is up to in real-time.
+A cute pixel-art robot face for your desktop. It shows how your AI assistant is feeling!
 
-Full-screen face with two eyes + a mouth on a warm salmon background. The browser tab title always reflects the current vibe: `clawd: locked in`, `clawd: LFG!!`, `clawd: zzz...`, etc.
+![clawd face](https://github.com/starksama/clawd-now/raw/main/preview.png)
+
+## What is this?
+
+It's a little robot face that sits on your screen and reacts to what your AI is doing:
+
+- 😴 **Sleeping** — zzz, resting
+- 😶 **Idle** — just vibing, doing random cute things
+- 🔒 **Focused** — squinty eyes, working hard
+- 😊 **Happy** — big smile, sparkles!
+- 😰 **Stressed** — sweating, worried brows
+- 💬 **Texting** — typing a reply
+- ☕ **Chilling** — relaxed, enjoying life
 
 ## Quick Start
 
 ```bash
+git clone https://github.com/starksama/clawd-now.git
+cd clawd-now
 npm install
-npm run dev     # → http://localhost:3001
+npm start
 ```
 
-## How It Works
+Open `http://localhost:3001` — that's it! 🎉
 
-The face is drawn on a `<canvas>` element. A single `openness` value controls everything:
-- Eyes smoothly transition between squares (open) and flat bars (closed)
-- Mouth appears/disappears in sync with eyes
-- All transitions use `lerp()` — no sudden jumps
-- **Tab title** updates dynamically with the current vibe status
+## How to make it react
 
-### Emotions
-
-Signal an emotion via the API and the face transitions smoothly:
-
-| Emotion | Eyes | Mouth | Movement | BPM | Hype | Tab Title |
-|---------|------|-------|----------|-----|------|-----------|
-| `sleeping` | flat bars + Z's | hidden | barely moves | 45-55 | 5-15% | `clawd: zzz...` |
-| `idle` | normal | sometimes | gentle bob | 60-70 | 20-40% | `clawd: vibing` |
-| `focused` | 咪咪眼 (squinty) | rare | locked-in | 72-82 | 50-70% | `clawd: locked in` |
-| `happy` | open | often | bouncy | 75-85 | 60-80% | `clawd: feeling good` |
-| `excited` | wide + open mouth | always | fast bounce | 95-120 | 85-100% | `clawd: LFG!!` |
-| `stressed` | narrowed + jitter | rare | twitchy | 88-105 | 30-50% | `clawd: sweating` |
-| `tired` | half-closed | sometimes | sluggish | 50-60 | 10-25% | `clawd: need coffee` |
-| `bored` | half-lidded | sometimes | eyes wander | 55-65 | 5-20% | `clawd: meh...` |
-| `curious` | wide open | often | eyes dart | 70-85 | 55-75% | `clawd: interesting...` |
-
-### Stats Panel
-
-At the bottom of the screen (white text, subtle but readable):
-- **♥ BPM** — heart rate that fluctuates within the emotion's range
-- **⚡ Hype %** — how excited about the current task
-- **Vibe** — emoji + mood word
-- **Task** — what's currently happening
-
-## API
-
-### Update State
+Send a simple request to change the face:
 
 ```bash
-# Full update
-curl -X POST http://localhost:3001/api/update \
+# Make it happy
+curl -X POST http://localhost:3001/api/signal/happy \
   -H 'Content-Type: application/json' \
-  -d '{"emotion":"focused","task":"Building analyzers...","energy":75}'
+  -d '{"task":"Feeling great!"}'
 
-# Quick signal
-curl -X POST http://localhost:3001/api/signal/excited \
-  -H 'Content-Type: application/json' \
-  -d '{"task":"Ship it!"}'
-
-# Get current state
-curl http://localhost:3001/api/status
+# Make it focused
+curl -X POST http://localhost:3001/api/signal/focused \
+  -d '{"task":"Deep work mode"}'
 ```
 
-### Shell Helper
+The face will smoothly animate to the new emotion!
 
-```bash
-./bin/stark-signal focused "Deep in code..."
-./bin/stark-signal bored "Writing tests..."
-./bin/stark-signal excited "Feature complete!"
-./bin/stark-signal sleeping
+## Features
+
+- 🎨 **Single theme color** — easy to customize
+- 🤖 **Pixel art style** — cute robot look
+- 💤 **Auto-sleep** — falls asleep if no signals for 5 min
+- 🎮 **Random activities** — does cute things when idle
+- ⚡ **Real-time updates** — WebSocket powered
+
+## Customize
+
+Edit `public/index.html`:
+
+```js
+const THEME_BG = '#E8937C';  // Change background color
+const EYE_COLOR = '#3D2817'; // Change eye/face color
 ```
 
-### WebSocket
+## Use with Clawdbot
 
-Connect to `ws://localhost:3001` for real-time updates:
+See [SKILL.md](./SKILL.md) for integration guide.
 
-```json
-{ "type": "statusUpdate", "data": { "emotion": "focused", "task": "...", "energy": 75 } }
-```
+## Stats Display
 
-## Auto-Sleep
+The bottom shows:
+- ❤️ **BPM** — simulated heartbeat (faster when excited)
+- ⚡ **Hype** — energy level percentage
+- 📝 **Status** — what it's currently doing
 
-If no signal is received for **5 minutes**, the face automatically transitions to sleeping. Tab title updates to `clawd: zzz...`.
+Hover over the stats area to access settings!
 
-## Architecture
+---
 
-```
-public/index.html   — Canvas renderer + animation loop + dynamic title
-src/server.ts       — Express + WebSocket server
-bin/stark-signal    — Shell helper script
-```
-
-### Animation System
-
-Each emotion is a **profile** with parameters:
-- `eyeOpen` — default eye openness (0-1)
-- `mouthChance` — probability of mouth appearing
-- `bobSpeed/Amount` — breathing rhythm
-- `driftSpeed/Amount` — eye look-around behavior
-- `blinkRate/squintRate` — animation event frequency
-- `eventDelay` — timing between animation events
-- `jitter` — micro-shake (stressed only)
-- `showZzz` — floating Z's (sleeping only)
-
-Profile transitions are smooth (`lerp` at 0.02 rate).
-
-## Design Philosophy
-
-- **Face is the star** — everything else is subtle
-- **Tab tells the story** — always know the vibe at a glance
-- **Same components, different parameters** — eyes + mouth + background, that's it
-- **Smooth transitions** — never snap, always lerp
-- **Minimal footprint** — single HTML file, no build step for frontend
+Made with ❤️ for [Clawdbot](https://github.com/clawdbot/clawdbot)
