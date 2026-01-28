@@ -19,26 +19,50 @@
 <body>
 <canvas id="c"></canvas>
 <script>
+// ── Easing Functions ────────────────────────────────
+const ease = {
+  linear: t => t,
+  inQuad: t => t * t,
+  outQuad: t => t * (2 - t),
+  inOutQuad: t => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t,
+  inCubic: t => t * t * t,
+  outCubic: t => (--t) * t * t + 1,
+  inOutCubic: t => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
+  inElastic: t => t === 0 ? 0 : t === 1 ? 1 : -Math.pow(2, 10 * t - 10) * Math.sin((t * 10 - 10.75) * ((2 * Math.PI) / 3)),
+  outElastic: t => t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1,
+  outBounce: t => {
+    const n1 = 7.5625, d1 = 2.75;
+    if (t < 1 / d1) return n1 * t * t;
+    if (t < 2 / d1) return n1 * (t -= 1.5 / d1) * t + 0.75;
+    if (t < 2.5 / d1) return n1 * (t -= 2.25 / d1) * t + 0.9375;
+    return n1 * (t -= 2.625 / d1) * t + 0.984375;
+  },
+};
+
 // ── Emotion Profiles ────────────────────────────────
-// Each emotion defines HOW the face behaves
 const PROFILES = {
   sleeping: {
     bg: '#E8A090',
-    eyeOpen: 0.12,        // barely open (flat bars)
-    mouthChance: 0.05,    // almost never shows mouth
-    bobSpeed: 0.008,      // very slow breathing
+    eyeOpen: 0.12,
+    mouthChance: 0.05,
+    mouthType: 'neutral',
+    bobSpeed: 0.008,
     bobAmount: 1.5,
-    driftSpeed: 0.002,    // barely moves
+    driftSpeed: 0.002,
     driftAmount: 1,
-    blinkRate: 0.005,     // rare blinks (already closed)
+    blinkRate: 0.005,
     squintRate: 0.01,
-    eventDelay: [200, 400], // slow events
+    eventDelay: [200, 400],
     showZzz: true,
+    eyeShine: false,
+    blush: 0,
+    squash: 1.0,
   },
   idle: {
     bg: '#E8937C',
     eyeOpen: 1.0,
     mouthChance: 0.4,
+    mouthType: 'neutral',
     bobSpeed: 0.015,
     bobAmount: 2.5,
     driftSpeed: 0.008,
@@ -47,160 +71,216 @@ const PROFILES = {
     squintRate: 0.15,
     eventDelay: [80, 200],
     showZzz: false,
+    eyeShine: true,
+    blush: 0,
+    squash: 1.0,
   },
   focused: {
     bg: '#E08D76',
-    eyeOpen: 0.35,        // 咪咪眼 — squinty, determined
-    mouthChance: 0.08,    // rarely shows mouth (concentrating)
-    bobSpeed: 0.025,      // tighter breathing
-    bobAmount: 1.2,       // less movement
-    driftSpeed: 0.003,    // barely looks around (locked in)
+    eyeOpen: 0.35,
+    mouthChance: 0.08,
+    mouthType: 'neutral',
+    bobSpeed: 0.025,
+    bobAmount: 1.2,
+    driftSpeed: 0.003,
     driftAmount: 0.8,
-    blinkRate: 0.08,      // barely blinks (already squinting)
+    blinkRate: 0.08,
     squintRate: 0.03,
-    eventDelay: [200, 400], // calm, fewer events
+    eventDelay: [200, 400],
     showZzz: false,
+    eyeShine: true,
+    blush: 0,
+    squash: 1.0,
   },
   happy: {
     bg: '#E89880',
-    eyeOpen: 1.0,
-    mouthChance: 0.8,     // usually showing mouth
+    eyeOpen: 0.85,
+    mouthChance: 0.9,
+    mouthType: 'smile',
     bobSpeed: 0.022,
-    bobAmount: 4,         // bouncy!
-    driftSpeed: 0.012,    // looks around more
+    bobAmount: 4,
+    driftSpeed: 0.012,
     driftAmount: 4,
     blinkRate: 0.3,
     squintRate: 0.1,
-    eventDelay: [60, 150], // lively
+    eventDelay: [60, 150],
     showZzz: false,
+    eyeShine: true,
+    blush: 0.4,
+    squash: 1.15,
+    showSparkles: true,
   },
   excited: {
     bg: '#E58A70',
     eyeOpen: 1.0,
-    mouthChance: 0.9,
-    bobSpeed: 0.035,      // fast bouncing
-    bobAmount: 5,         // big bounces
-    driftSpeed: 0.018,    // looks around fast
+    mouthChance: 0.95,
+    mouthType: 'open',
+    bobSpeed: 0.035,
+    bobAmount: 6,
+    driftSpeed: 0.018,
     driftAmount: 5,
     blinkRate: 0.35,
     squintRate: 0.05,
-    eventDelay: [40, 100], // very active
+    eventDelay: [40, 100],
     showZzz: false,
+    eyeShine: true,
+    blush: 0.3,
+    squash: 1.25,
+    showSparkles: true,
+    screenShake: 0.3,
   },
   stressed: {
     bg: '#E08870',
-    eyeOpen: 0.7,         // slightly narrowed
+    eyeOpen: 0.7,
     mouthChance: 0.15,
+    mouthType: 'worried',
     bobSpeed: 0.02,
     bobAmount: 1.5,
-    driftSpeed: 0.015,    // jittery small movements
+    driftSpeed: 0.015,
     driftAmount: 2,
-    blinkRate: 0.4,       // blinks a lot
+    blinkRate: 0.4,
     squintRate: 0.2,
-    eventDelay: [50, 120], // twitchy
+    eventDelay: [50, 120],
     showZzz: false,
-    jitter: true,         // adds micro-jitter
+    jitter: true,
+    eyeShine: false,
+    blush: 0,
+    squash: 0.95,
+    showSweat: true,
   },
   tired: {
     bg: '#E0A090',
-    eyeOpen: 0.4,         // half closed
+    eyeOpen: 0.4,
     mouthChance: 0.2,
-    bobSpeed: 0.01,       // slow
+    mouthType: 'neutral',
+    bobSpeed: 0.01,
     bobAmount: 2,
-    driftSpeed: 0.004,    // sluggish
+    driftSpeed: 0.004,
     driftAmount: 2,
     blinkRate: 0.15,
-    squintRate: 0.3,      // squints a lot
+    squintRate: 0.3,
     eventDelay: [120, 300],
     showZzz: false,
+    eyeShine: false,
+    blush: 0,
+    squash: 0.9,
   },
   bored: {
-    bg: '#D8A090',        // dull, muted
-    eyeOpen: 0.5,         // half-lidded, unamused
+    bg: '#D8A090',
+    eyeOpen: 0.5,
     mouthChance: 0.3,
-    bobSpeed: 0.006,      // barely moving
+    mouthType: 'neutral',
+    bobSpeed: 0.006,
     bobAmount: 1,
-    driftSpeed: 0.015,    // eyes wander a LOT (looking around bored)
+    driftSpeed: 0.015,
     driftAmount: 5,
     blinkRate: 0.2,
     squintRate: 0.25,
     eventDelay: [100, 250],
     showZzz: false,
+    eyeShine: false,
+    blush: 0,
+    squash: 1.0,
   },
   curious: {
-    bg: '#E89580',        // warm, alert
-    eyeOpen: 1.0,         // wide eyes
+    bg: '#E89580',
+    eyeOpen: 1.0,
     mouthChance: 0.5,
+    mouthType: 'small-o',
     bobSpeed: 0.02,
     bobAmount: 3,
-    driftSpeed: 0.02,     // eyes dart around (looking at everything)
+    driftSpeed: 0.02,
     driftAmount: 6,
     blinkRate: 0.3,
     squintRate: 0.05,
     eventDelay: [50, 120],
     showZzz: false,
+    eyeShine: true,
+    blush: 0.1,
+    squash: 1.05,
   },
   thinking: {
-    bg: '#D4A08E',        // muted warm — contemplative
-    eyeOpen: 0.45,        // slightly squinted, processing
-    mouthChance: 0.05,    // mouth closed — concentrating
-    bobSpeed: 0.012,      // slow, steady
+    bg: '#D4A08E',
+    eyeOpen: 0.45,
+    mouthChance: 0.05,
+    mouthType: 'hmm',
+    bobSpeed: 0.012,
     bobAmount: 1.8,
-    driftSpeed: 0.005,    // eyes drift slowly (lost in thought)
+    driftSpeed: 0.005,
     driftAmount: 2,
-    blinkRate: 0.1,       // fewer blinks
-    squintRate: 0.2,      // squints while thinking
+    blinkRate: 0.1,
+    squintRate: 0.2,
     eventDelay: [150, 350],
     showZzz: false,
+    eyeShine: false,
+    blush: 0,
+    squash: 1.0,
+    lookUp: true,
   },
   angry: {
-    bg: '#C85A5A',        // RED — heated
-    eyeOpen: 0.3,         // narrow, glaring
-    mouthChance: 0.7,     // gritting teeth
-    bobSpeed: 0.04,       // fast, aggressive breathing
+    bg: '#C85A5A',
+    eyeOpen: 0.3,
+    mouthChance: 0.7,
+    mouthType: 'grr',
+    bobSpeed: 0.04,
     bobAmount: 3,
-    driftSpeed: 0.002,    // eyes locked forward (staring you down)
+    driftSpeed: 0.002,
     driftAmount: 0.5,
-    blinkRate: 0.05,      // barely blinks — intense stare
-    squintRate: 0.4,      // lots of squinting
-    eventDelay: [30, 80], // twitchy, fast
+    blinkRate: 0.05,
+    squintRate: 0.4,
+    eventDelay: [30, 80],
     showZzz: false,
-    jitter: true,         // SHAKING with rage
+    jitter: true,
+    eyeShine: false,
+    blush: 0.5,
+    squash: 0.9,
+    screenShake: 0.5,
+    showAngerMark: true,
   },
   texting: {
-    bg: '#E0926E',        // warm, active
-    eyeOpen: 0.8,         // slightly focused
-    mouthChance: 0.6,     // mouth moves — talking/typing
-    bobSpeed: 0.03,       // quick little bobs
+    bg: '#E0926E',
+    eyeOpen: 0.8,
+    mouthChance: 0.6,
+    mouthType: 'neutral',
+    bobSpeed: 0.03,
     bobAmount: 2,
-    driftSpeed: 0.004,    // eyes mostly forward (reading/writing)
+    driftSpeed: 0.004,
     driftAmount: 1,
     blinkRate: 0.25,
     squintRate: 0.08,
-    eventDelay: [40, 100], // fast events — actively composing
+    eventDelay: [40, 100],
     showZzz: false,
+    eyeShine: true,
+    blush: 0,
+    squash: 1.0,
   },
   inlove: {
-    bg: '#E8889C',        // warm pink — lovestruck
-    eyeOpen: 1.0,         // wide open heart eyes
-    mouthChance: 0.85,    // big smile
-    bobSpeed: 0.018,      // gentle swaying
-    bobAmount: 3.5,       // dreamy bobs
-    driftSpeed: 0.006,    // slow, dreamy gaze
+    bg: '#E8889C',
+    eyeOpen: 1.0,
+    mouthChance: 0.85,
+    mouthType: 'smile',
+    bobSpeed: 0.018,
+    bobAmount: 3.5,
+    driftSpeed: 0.006,
     driftAmount: 2,
-    blinkRate: 0.12,      // barely blinks — mesmerized
+    blinkRate: 0.12,
     squintRate: 0.03,
     eventDelay: [80, 200],
     showZzz: false,
-    showHearts: true,     // floating hearts like zzz's
-    heartEyes: true,      // draw heart-shaped eyes
+    showHearts: true,
+    heartEyes: true,
+    eyeShine: false,
+    blush: 0.7,
+    squash: 1.1,
   },
 };
 
 const EYE_COLOR = '#3D2817';
 const HEART_COLOR = '#CC2244';
+const BLUSH_COLOR = 'rgba(255, 120, 140, ';
+const SPARKLE_COLOR = '#FFE066';
 
-// Heart pixel art (7x8 bitmap — fits eye dimensions perfectly)
+// Heart pixel art (7x8)
 const HEART_SHAPE = [
   [0,1,1,0,1,1,0],
   [1,1,1,1,1,1,1],
@@ -222,15 +302,30 @@ let openness = 0.12;
 let targetOpenness = 0.12;
 let mouthShow = 0;
 let targetMouth = 0;
+let currentMouthType = 'neutral';
 
 let nextEvent = 100;
 let currentPhase = 'idle';
 
-// Smooth profile interpolation
 let currentProfile = { ...PROFILES.sleeping };
 let targetProfile = PROFILES.sleeping;
 
-// ── Stats (fun personality metrics) ──────────────────
+// Particles
+let particles = [];
+
+// Smooth values for squash/stretch
+let currentSquash = 1.0;
+let targetSquash = 1.0;
+
+// Screen shake
+let shakeX = 0;
+let shakeY = 0;
+
+// Blush alpha
+let currentBlush = 0;
+let targetBlush = 0;
+
+// ── Stats ────────────────────────────────────────────
 const STATS = {
   sleeping:  { bpm: [45, 55],  hype: [5, 15],   vibe: '💤 zzz...' },
   idle:      { bpm: [60, 70],  hype: [20, 40],  vibe: '😶 vibing' },
@@ -255,17 +350,14 @@ let targetHype = 10;
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 
-// ── Hover Detection ─────────────────────────────────
 let mouseY = 0;
 let isHoveringStats = false;
 
 canvas.addEventListener('mousemove', (e) => {
   mouseY = e.clientY / window.innerHeight;
-  isHoveringStats = mouseY > 0.7; // bottom 30% of screen
+  isHoveringStats = mouseY > 0.7;
 });
-canvas.addEventListener('mouseleave', () => {
-  isHoveringStats = false;
-});
+canvas.addEventListener('mouseleave', () => isHoveringStats = false);
 
 function resize() {
   canvas.width = window.innerWidth * devicePixelRatio;
@@ -276,10 +368,101 @@ resize();
 window.addEventListener('resize', resize);
 
 function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+// ── Particle System ─────────────────────────────────
+function spawnParticle(type, x, y) {
+  const p = { type, x, y, life: 1, maxLife: 60 + Math.random() * 40 };
+  
+  if (type === 'sparkle') {
+    p.vx = (Math.random() - 0.5) * 2;
+    p.vy = -Math.random() * 2 - 1;
+    p.size = 3 + Math.random() * 4;
+    p.rotation = Math.random() * Math.PI * 2;
+  } else if (type === 'heart') {
+    p.vx = (Math.random() - 0.5) * 1.5;
+    p.vy = -Math.random() * 1.5 - 0.5;
+    p.size = 8 + Math.random() * 6;
+    p.maxLife = 80 + Math.random() * 40;
+  } else if (type === 'sweat') {
+    p.vx = Math.random() * 0.5;
+    p.vy = Math.random() * 0.5 + 0.5;
+    p.size = 4 + Math.random() * 3;
+    p.maxLife = 40 + Math.random() * 20;
+  } else if (type === 'zzz') {
+    p.vx = 0.3 + Math.random() * 0.3;
+    p.vy = -0.5 - Math.random() * 0.3;
+    p.size = 10 + Math.random() * 8;
+    p.maxLife = 100 + Math.random() * 50;
+  }
+  
+  particles.push(p);
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= 1 / p.maxLife;
+    
+    if (p.type === 'sparkle') {
+      p.rotation += 0.1;
+      p.vy += 0.02; // gravity
+    } else if (p.type === 'heart') {
+      p.vx *= 0.99;
+      p.x += Math.sin(tick * 0.05 + i) * 0.3; // float side to side
+    } else if (p.type === 'sweat') {
+      p.vy += 0.05; // gravity
+    }
+    
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles(scale, cx, cy) {
+  for (const p of particles) {
+    const alpha = ease.outQuad(p.life);
+    ctx.globalAlpha = alpha;
+    
+    if (p.type === 'sparkle') {
+      ctx.save();
+      ctx.translate(cx + p.x * scale, cy + p.y * scale);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = SPARKLE_COLOR;
+      // 4-point star
+      const s = p.size * scale * 0.15;
+      ctx.beginPath();
+      for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2;
+        const r = i % 2 === 0 ? s : s * 0.3;
+        ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    } else if (p.type === 'heart') {
+      ctx.fillStyle = HEART_COLOR;
+      ctx.font = `${p.size * scale * 0.2}px sans-serif`;
+      ctx.fillText('♥', cx + p.x * scale, cy + p.y * scale);
+    } else if (p.type === 'sweat') {
+      ctx.fillStyle = '#88CCFF';
+      const s = p.size * scale * 0.1;
+      ctx.beginPath();
+      ctx.ellipse(cx + p.x * scale, cy + p.y * scale, s * 0.6, s, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (p.type === 'zzz') {
+      ctx.fillStyle = EYE_COLOR;
+      ctx.font = `bold ${p.size * scale * 0.08}px monospace`;
+      ctx.fillText('z', cx + p.x * scale, cy + p.y * scale);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
 
 // ── Profile Interpolation ───────────────────────────
 function lerpProfile() {
-  const t = 0.02; // slow transition between emotion profiles
+  const t = 0.03;
   for (const key of ['bobSpeed', 'bobAmount', 'driftSpeed', 'driftAmount']) {
     currentProfile[key] = lerp(currentProfile[key], targetProfile[key], t);
   }
@@ -289,36 +472,72 @@ function lerpProfile() {
 function draw() {
   const W = canvas.width;
   const H = canvas.height;
-  // BIGGER face — use more of the screen
   const scale = Math.min(W, H) / 140;
-  const cx = W / 2;
-  const cy = H * 0.4; // above center to make room for stats
+  let cx = W / 2;
+  let cy = H * 0.4;
+  
+  // Screen shake
+  if (targetProfile.screenShake) {
+    shakeX = (Math.random() - 0.5) * scale * targetProfile.screenShake * 2;
+    shakeY = (Math.random() - 0.5) * scale * targetProfile.screenShake * 2;
+  } else {
+    shakeX *= 0.9;
+    shakeY *= 0.9;
+  }
+  cx += shakeX;
+  cy += shakeY;
 
   const p = currentProfile;
 
-  // Background — smooth color transition
+  // Background
   ctx.fillStyle = targetProfile.bg;
   ctx.fillRect(0, 0, W, H);
 
-  // Bob
-  const bobY = Math.sin(tick * p.bobSpeed) * scale * p.bobAmount;
+  // Bob with squash/stretch
+  const bobPhase = tick * p.bobSpeed;
+  const rawBob = Math.sin(bobPhase);
+  const bobY = rawBob * scale * p.bobAmount;
+  
+  // Squash when at bottom of bob, stretch when at top
+  const squashFromBob = 1 + (rawBob * 0.05 * (targetSquash - 0.9));
+  currentSquash = lerp(currentSquash, targetSquash * squashFromBob, 0.1);
 
-  // Drift (look around)
+  // Drift
   const driftX = Math.sin(tick * p.driftSpeed) * scale * p.driftAmount
                + Math.sin(tick * p.driftSpeed * 0.4) * scale * p.driftAmount * 0.5;
-  const driftY = Math.cos(tick * p.driftSpeed * 0.75) * scale * p.driftAmount * 0.5
-               + Math.sin(tick * p.driftSpeed * 0.3) * scale * p.driftAmount * 0.3;
+  let driftY = Math.cos(tick * p.driftSpeed * 0.75) * scale * p.driftAmount * 0.5;
+  
+  // Look up when thinking
+  if (targetProfile.lookUp) {
+    driftY -= scale * 3;
+  }
 
-  // Jitter (stressed)
+  // Jitter
   let jitterX = 0, jitterY = 0;
   if (targetProfile.jitter) {
-    jitterX = (Math.random() - 0.5) * scale * 0.6;
-    jitterY = (Math.random() - 0.5) * scale * 0.4;
+    jitterX = (Math.random() - 0.5) * scale * 0.8;
+    jitterY = (Math.random() - 0.5) * scale * 0.5;
+  }
+
+  // ── Blush ──
+  currentBlush = lerp(currentBlush, targetBlush, 0.05);
+  if (currentBlush > 0.01) {
+    const blushSize = scale * 8;
+    const blushY = cy + scale * 5 + bobY;
+    ctx.fillStyle = BLUSH_COLOR + (currentBlush * 0.5) + ')';
+    // Left cheek
+    ctx.beginPath();
+    ctx.ellipse(cx - scale * 22 + driftX, blushY + driftY * 0.3, blushSize, blushSize * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Right cheek
+    ctx.beginPath();
+    ctx.ellipse(cx + scale * 22 + driftX, blushY + driftY * 0.3, blushSize, blushSize * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // ── Eyes ──
-  const eyeW = scale * 14;
-  const eyeMaxH = scale * 16;
+  const eyeW = scale * 14 / currentSquash;
+  const eyeMaxH = scale * 16 * currentSquash;
   const eyeMinH = scale * 2.5;
   const eyeH = lerp(eyeMinH, eyeMaxH, openness);
   const eyeGap = scale * 18;
@@ -326,8 +545,8 @@ function draw() {
   const eyeX = cx + driftX + jitterX;
 
   if (targetProfile.heartEyes && openness > 0.15) {
-    // ── Heart Eyes ── pixel art hearts in red!
-    const heartScale = openness; // shrink hearts when blinking
+    // Heart Eyes
+    const heartScale = openness;
     const pxSize = scale * 2 * heartScale;
     const hRows = HEART_SHAPE.length;
     const hCols = HEART_SHAPE[0].length;
@@ -352,81 +571,133 @@ function draw() {
       }
     }
   } else {
-    // ── Normal rectangular eyes ──
+    // Normal eyes
     ctx.fillStyle = EYE_COLOR;
-    ctx.fillRect(
-      Math.round(eyeX - eyeGap - eyeW / 2),
-      Math.round(eyeY - eyeH / 2 + jitterY),
-      Math.round(eyeW),
-      Math.round(eyeH)
-    );
-    ctx.fillRect(
-      Math.round(eyeX + eyeGap - eyeW / 2),
-      Math.round(eyeY - eyeH / 2 + jitterY),
-      Math.round(eyeW),
-      Math.round(eyeH)
-    );
+    const leftEyeX = Math.round(eyeX - eyeGap - eyeW / 2);
+    const rightEyeX = Math.round(eyeX + eyeGap - eyeW / 2);
+    const eyeTop = Math.round(eyeY - eyeH / 2 + jitterY);
+    
+    ctx.fillRect(leftEyeX, eyeTop, Math.round(eyeW), Math.round(eyeH));
+    ctx.fillRect(rightEyeX, eyeTop, Math.round(eyeW), Math.round(eyeH));
+    
+    // Eye shine (when eyes are open enough)
+    if (targetProfile.eyeShine && openness > 0.4) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      const shineSize = scale * 3;
+      const shineOffsetX = scale * 3;
+      const shineOffsetY = -scale * 2;
+      ctx.fillRect(
+        leftEyeX + shineOffsetX,
+        eyeTop + shineOffsetY + eyeH * 0.2,
+        shineSize, shineSize
+      );
+      ctx.fillRect(
+        rightEyeX + shineOffsetX,
+        eyeTop + shineOffsetY + eyeH * 0.2,
+        shineSize, shineSize
+      );
+    }
   }
 
   // ── Mouth ──
   if (mouthShow > 0.02) {
-    // Excited = open mouth (bigger!)
-    const isExcited = emotion === 'excited';
-    const mouthW = isExcited ? scale * 9 : scale * 8;
-    const mouthMaxH = isExcited ? scale * 7 : scale * 4;
-    const mouthH = mouthMaxH * mouthShow;
     const mouthY = cy + scale * 16 + bobY + driftY * 0.3;
-
-    ctx.globalAlpha = Math.min(1, mouthShow);
+    const mouthX = eyeX + jitterX * 0.3;
+    
     ctx.fillStyle = EYE_COLOR;
-    ctx.fillRect(
-      Math.round(eyeX - mouthW / 2 + jitterX * 0.3),
-      Math.round(mouthY - mouthH / 2 + jitterY * 0.3),
-      Math.round(mouthW),
-      Math.round(mouthH)
-    );
-    ctx.globalAlpha = 1;
-  }
-
-  // ── Z's (sleeping) ──
-  if (targetProfile.showZzz && openness < 0.3) {
-    for (let i = 0; i < 3; i++) {
-      const phase = (tick * 0.008 + i * 2) % 6;
-      const zx = eyeX + scale * 25 + i * scale * 7;
-      const zy = cy - scale * 20 - phase * scale * 10;
-      const alpha = Math.max(0, 1 - phase / 6);
-      const fontSize = Math.round(scale * 5 * (1 + i * 0.3));
-      ctx.font = `bold ${fontSize}px monospace`;
-      ctx.fillStyle = EYE_COLOR;
-      ctx.globalAlpha = alpha * 0.5;
-      ctx.fillText('z', zx, zy + bobY);
+    ctx.globalAlpha = Math.min(1, mouthShow);
+    
+    if (currentMouthType === 'smile') {
+      // Happy curved mouth (simple arc)
+      const mouthW = scale * 10;
+      const mouthH = scale * 4 * mouthShow;
+      ctx.beginPath();
+      ctx.arc(mouthX, mouthY - mouthH/2, mouthW/2, 0.1 * Math.PI, 0.9 * Math.PI);
+      ctx.lineTo(mouthX - mouthW/2 + scale, mouthY);
+      ctx.fill();
+    } else if (currentMouthType === 'open') {
+      // Excited open mouth
+      const mouthW = scale * 10;
+      const mouthH = scale * 8 * mouthShow;
+      ctx.fillRect(
+        Math.round(mouthX - mouthW / 2),
+        Math.round(mouthY - mouthH / 2),
+        Math.round(mouthW),
+        Math.round(mouthH)
+      );
+    } else if (currentMouthType === 'small-o') {
+      // Curious "o" mouth
+      const mouthSize = scale * 5 * mouthShow;
+      ctx.beginPath();
+      ctx.arc(mouthX, mouthY, mouthSize/2, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (currentMouthType === 'worried') {
+      // Wavy worried mouth
+      ctx.beginPath();
+      ctx.moveTo(mouthX - scale * 4, mouthY);
+      ctx.quadraticCurveTo(mouthX - scale * 2, mouthY + scale * 2, mouthX, mouthY);
+      ctx.quadraticCurveTo(mouthX + scale * 2, mouthY - scale * 2, mouthX + scale * 4, mouthY);
+      ctx.lineWidth = scale * 1.5;
+      ctx.strokeStyle = EYE_COLOR;
+      ctx.stroke();
+    } else if (currentMouthType === 'grr') {
+      // Angry teeth
+      const mouthW = scale * 12;
+      const mouthH = scale * 5 * mouthShow;
+      ctx.fillRect(
+        Math.round(mouthX - mouthW / 2),
+        Math.round(mouthY - mouthH / 2),
+        Math.round(mouthW),
+        Math.round(mouthH)
+      );
+      // White line for teeth
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(
+        Math.round(mouthX - mouthW / 2 + scale),
+        Math.round(mouthY - scale * 0.5),
+        Math.round(mouthW - scale * 2),
+        Math.round(scale)
+      );
+    } else {
+      // Default neutral mouth
+      const mouthW = scale * 8;
+      const mouthH = scale * 4 * mouthShow;
+      ctx.fillRect(
+        Math.round(mouthX - mouthW / 2),
+        Math.round(mouthY - mouthH / 2),
+        Math.round(mouthW),
+        Math.round(mouthH)
+      );
     }
     ctx.globalAlpha = 1;
   }
 
-  // ── Floating Hearts (inlove) ──
-  if (targetProfile.showHearts) {
-    for (let i = 0; i < 4; i++) {
-      const phase = (tick * 0.006 + i * 1.8) % 7;
-      const side = i % 2 === 0 ? 1 : -1;
-      const hx = eyeX + side * (scale * 20 + i * scale * 5) + Math.sin(tick * 0.01 + i) * scale * 3;
-      const hy = cy - scale * 15 - phase * scale * 9;
-      const alpha = Math.max(0, 1 - phase / 7);
-      const fontSize = Math.round(scale * 4 * (0.8 + i * 0.15));
-      ctx.font = `${fontSize}px sans-serif`;
-      ctx.fillStyle = HEART_COLOR;
-      ctx.globalAlpha = alpha * 0.6;
-      ctx.fillText('♥', hx, hy + bobY);
-    }
-    ctx.globalAlpha = 1;
+  // ── Anger Mark ──
+  if (targetProfile.showAngerMark) {
+    const markX = eyeX + scale * 28;
+    const markY = cy - scale * 18 + bobY;
+    ctx.strokeStyle = '#CC3333';
+    ctx.lineWidth = scale * 1.2;
+    ctx.beginPath();
+    // Cross pattern (anger vein)
+    ctx.moveTo(markX - scale * 3, markY - scale * 3);
+    ctx.lineTo(markX + scale * 3, markY + scale * 3);
+    ctx.moveTo(markX + scale * 3, markY - scale * 3);
+    ctx.lineTo(markX - scale * 3, markY + scale * 3);
+    ctx.moveTo(markX, markY - scale * 4);
+    ctx.lineTo(markX, markY + scale * 4);
+    ctx.moveTo(markX - scale * 4, markY);
+    ctx.lineTo(markX + scale * 4, markY);
+    ctx.stroke();
   }
 
-  // ── Fun Stats Panel (bottom) ──
+  // ── Particles ──
+  drawParticles(scale, cx, cy);
+
+  // ── Stats Panel ──
   const fontSize = Math.max(13, Math.round(scale * 2.8));
   const smallFont = Math.max(11, Math.round(scale * 2.3));
   const statsY = H * 0.83;
-
-  // Hover boost — pure white when mouse is near stats
   const statsAlpha = isHoveringStats ? 1.0 : 0.7;
   const vibeAlpha = isHoveringStats ? 0.95 : 0.6;
   const taskAlpha = isHoveringStats ? 0.9 : 0.5;
@@ -434,7 +705,6 @@ function draw() {
   ctx.fillStyle = '#fff';
   ctx.textAlign = 'center';
 
-  // Row 1: ❤️ BPM    🔥 Hype
   ctx.font = `bold ${fontSize}px monospace`;
   ctx.globalAlpha = statsAlpha;
   const bpmStr = `♥ ${Math.round(displayBpm)} bpm`;
@@ -443,13 +713,11 @@ function draw() {
   ctx.fillText(bpmStr, cx - gap, statsY);
   ctx.fillText(hypeStr, cx + gap, statsY);
 
-  // Row 2: Vibe status
   const st = STATS[emotion] || STATS.idle;
   ctx.font = `${smallFont}px monospace`;
   ctx.globalAlpha = vibeAlpha;
   ctx.fillText(st.vibe, cx, statsY + fontSize * 1.5);
 
-  // Row 3: Task
   ctx.globalAlpha = taskAlpha;
   const displayTask = task.length > 50 ? task.slice(0, 47) + '...' : task;
   ctx.fillText(displayTask, cx, statsY + fontSize * 2.8);
@@ -462,30 +730,45 @@ function draw() {
 function updateAnimation() {
   const p = targetProfile;
 
-  // Smooth lerp toward targets
-  openness = lerp(openness, targetOpenness, 0.04);
-  mouthShow = lerp(mouthShow, targetMouth, 0.05);
+  // Smooth lerp
+  openness = lerp(openness, targetOpenness, 0.06);
+  mouthShow = lerp(mouthShow, targetMouth, 0.08);
+  targetSquash = p.squash || 1.0;
+  targetBlush = p.blush || 0;
 
-  // Interpolate profile values
   lerpProfile();
+  updateParticles();
+
+  // Spawn particles
+  if (targetProfile.showSparkles && Math.random() < 0.08) {
+    spawnParticle('sparkle', (Math.random() - 0.5) * 60, -20 - Math.random() * 20);
+  }
+  if (targetProfile.showHearts && Math.random() < 0.05) {
+    const side = Math.random() < 0.5 ? -1 : 1;
+    spawnParticle('heart', side * (25 + Math.random() * 10), -10);
+  }
+  if (targetProfile.showSweat && Math.random() < 0.04) {
+    spawnParticle('sweat', 30 + Math.random() * 5, -15);
+  }
+  if (targetProfile.showZzz && Math.random() < 0.02) {
+    spawnParticle('zzz', 25, -15);
+  }
 
   nextEvent--;
   if (nextEvent <= 0) {
     if (currentPhase === 'idle') {
       const r = Math.random();
       if (r < p.blinkRate) {
-        // Quick blink
         currentPhase = 'blinking';
         targetOpenness = 0;
-        nextEvent = 10;
+        nextEvent = 8 + Math.random() * 4;
       } else if (r < p.blinkRate + p.squintRate) {
-        // Slow squint
         currentPhase = 'squinting';
         targetOpenness = p.eyeOpen * 0.15;
-        nextEvent = 30 + Math.random() * 50;
+        nextEvent = 25 + Math.random() * 40;
       } else if (r < p.blinkRate + p.squintRate + 0.2) {
-        // Toggle mouth
         targetMouth = Math.random() < p.mouthChance ? 1 : 0;
+        if (targetMouth > 0) currentMouthType = p.mouthType || 'neutral';
         scheduleNext();
       } else {
         scheduleNext();
@@ -504,20 +787,18 @@ function updateAnimation() {
     }
   }
 
-  // Hide mouth when eyes mostly closed
   if (openness < 0.2 && targetMouth > 0.5) {
     targetMouth = 0;
   }
 
-  // ── Stats fluctuation ──
+  // Stats
   const st = STATS[emotion] || STATS.idle;
-  // Slowly drift targets with slight randomness
   if (tick % 30 === 0) {
     targetBpm = st.bpm[0] + Math.random() * (st.bpm[1] - st.bpm[0]);
     targetHype = st.hype[0] + Math.random() * (st.hype[1] - st.hype[0]);
   }
-  displayBpm = lerp(displayBpm, targetBpm, 0.012);   // ~5s to settle — like a real monitor
-  displayHype = lerp(displayHype, targetHype, 0.02);  // ~3s to settle
+  displayBpm = lerp(displayBpm, targetBpm, 0.015);
+  displayHype = lerp(displayHype, targetHype, 0.025);
 }
 
 function scheduleNext() {
@@ -537,7 +818,6 @@ loop();
 // ── Tab Title ────────────────────────────────────────
 function updateTitle() {
   const st = STATS[emotion] || STATS.idle;
-  // Strip emoji prefix from vibe for clean title
   const vibe = st.vibe.replace(/^[\p{Emoji}\uFE0F\u200D]+\s*/u, '');
   document.title = `clawd: ${vibe}`;
 }
@@ -548,13 +828,26 @@ function setEmotion(newEmotion) {
     emotion = newEmotion;
     targetProfile = PROFILES[newEmotion];
     targetOpenness = targetProfile.eyeOpen;
-    // Reset mouth based on new emotion's mouth chance
     targetMouth = Math.random() < targetProfile.mouthChance ? 1 : 0;
-    // Immediately retarget stats so BPM/hype react fast
+    currentMouthType = targetProfile.mouthType || 'neutral';
+    
     const st = STATS[newEmotion] || STATS.idle;
     targetBpm = st.bpm[0] + Math.random() * (st.bpm[1] - st.bpm[0]);
     targetHype = st.hype[0] + Math.random() * (st.hype[1] - st.hype[0]);
     updateTitle();
+    
+    // Burst particles on emotion change
+    if (newEmotion === 'happy' || newEmotion === 'excited') {
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => spawnParticle('sparkle', (Math.random() - 0.5) * 50, -15 - Math.random() * 15), i * 50);
+      }
+    }
+    if (newEmotion === 'inlove') {
+      for (let i = 0; i < 4; i++) {
+        const side = i % 2 === 0 ? -1 : 1;
+        setTimeout(() => spawnParticle('heart', side * (20 + Math.random() * 15), -10), i * 80);
+      }
+    }
   }
 }
 
