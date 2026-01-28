@@ -58,14 +58,13 @@ const PROFILES = {
     squintRate: 0,
     eventDelay: [300, 500],
     showZzz: true,
-    eyeShine: false,
     blush: 0,
     squash: 1.0,
     eyebrows: 'none',
   },
   // 😶 IDLE - Relaxed, neutral expression
   idle: {
-    eyeOpen: 0.85,
+    eyeOpen: 1.0,
     mouthChance: 0.15,
     mouthType: 'neutral',
     bobSpeed: 0.012,
@@ -76,7 +75,6 @@ const PROFILES = {
     squintRate: 0.1,
     eventDelay: [100, 250],
     showZzz: false,
-    eyeShine: true,
     blush: 0,
     squash: 1.0,
     eyebrows: 'none',
@@ -94,7 +92,6 @@ const PROFILES = {
     squintRate: 0,
     eventDelay: [250, 450],
     showZzz: false,
-    eyeShine: false,
     blush: 0,
     squash: 0.95,
     eyebrows: 'furrowed',
@@ -112,7 +109,6 @@ const PROFILES = {
     squintRate: 0.05,
     eventDelay: [60, 140],
     showZzz: false,
-    eyeShine: true,
     blush: 0.5,
     squash: 1.1,
     eyebrows: 'raised',
@@ -132,7 +128,6 @@ const PROFILES = {
     eventDelay: [60, 120],
     showZzz: false,
     jitter: true,
-    eyeShine: false,
     blush: 0,
     squash: 0.92,
     eyebrows: 'worried',
@@ -151,7 +146,6 @@ const PROFILES = {
     squintRate: 0.05,
     eventDelay: [80, 180],
     showZzz: false,
-    eyeShine: true,
     blush: 0,
     squash: 1.0,
     eyebrows: 'none',
@@ -169,7 +163,6 @@ const PROFILES = {
     squintRate: 0.2,
     eventDelay: [150, 300],
     showZzz: false,
-    eyeShine: true,
     blush: 0.2,
     squash: 1.0,
     eyebrows: 'none',
@@ -202,13 +195,13 @@ const HEART_SHAPE = [
 ];
 
 // ── State ───────────────────────────────────────────
-let emotion = 'sleeping';
-let task = 'Resting peacefully...';
+let emotion = 'idle';
+let task = 'Just vibing...';
 let energy = 100;
 let tick = 0;
 
-let openness = 0.12;
-let targetOpenness = 0.12;
+let openness = 0.85;
+let targetOpenness = 0.85;
 let mouthShow = 0;
 let targetMouth = 0;
 let currentMouthType = 'neutral';
@@ -216,8 +209,8 @@ let currentMouthType = 'neutral';
 let nextEvent = 100;
 let currentPhase = 'idle';
 
-let currentProfile = { ...PROFILES.sleeping };
-let targetProfile = PROFILES.sleeping;
+let currentProfile = { ...PROFILES.idle };
+let targetProfile = PROFILES.idle;
 
 // Particles
 let particles = [];
@@ -233,6 +226,56 @@ let shakeY = 0;
 // Blush alpha
 let currentBlush = 0;
 let targetBlush = 0;
+
+// ── Auto-return to idle & Random Activities ─────────
+const RETURN_TO_IDLE_MS = 2 * 60 * 1000; // 2 minutes
+let lastSignalTime = Date.now();
+let idleActivityTimer = null;
+
+const IDLE_ACTIVITIES = [
+  { task: 'Looking around... 👀', duration: 3000 },
+  { task: 'Stretching~ 🙆', duration: 2500 },
+  { task: 'Humming a tune 🎵', duration: 4000 },
+  { task: 'Thinking about life 💭', duration: 3500 },
+  { task: 'Daydreaming ☁️', duration: 4000 },
+  { task: 'Wiggling happily ✨', duration: 2000 },
+  { task: 'Checking surroundings 🔍', duration: 3000 },
+  { task: 'Taking a deep breath 🌬️', duration: 2500 },
+  { task: 'Admiring the view 🌅', duration: 3500 },
+  { task: 'Just existing 🫧', duration: 3000 },
+];
+
+function scheduleIdleActivity() {
+  if (idleActivityTimer) clearTimeout(idleActivityTimer);
+  if (emotion !== 'idle') return;
+  
+  const delay = 5000 + Math.random() * 10000; // 5-15 seconds
+  idleActivityTimer = setTimeout(() => {
+    if (emotion === 'idle') {
+      const activity = IDLE_ACTIVITIES[Math.floor(Math.random() * IDLE_ACTIVITIES.length)];
+      task = activity.task;
+      // Return to default after activity
+      setTimeout(() => {
+        if (emotion === 'idle') {
+          task = 'Just vibing...';
+        }
+        scheduleIdleActivity();
+      }, activity.duration);
+    }
+  }, delay);
+}
+
+function checkAutoReturn() {
+  const now = Date.now();
+  if (emotion !== 'idle' && emotion !== 'sleeping' && (now - lastSignalTime) > RETURN_TO_IDLE_MS) {
+    setEmotion('idle');
+    task = 'Back to vibing...';
+    scheduleIdleActivity();
+  }
+}
+
+// Check auto-return every 30 seconds
+setInterval(checkAutoReturn, 30000);
 
 // ── Stats (7 core states) ────────────────────────────
 const STATS = {
@@ -454,11 +497,11 @@ function draw() {
   }
 
   // ── Eyes ──
-  const eyeW = scale * 14 / currentSquash;
-  const eyeMaxH = scale * 16 * currentSquash;
+  const eyeW = scale * 18 / currentSquash;    // Bigger eyes (EMO-style)
+  const eyeMaxH = scale * 22 * currentSquash; // Taller for cuter look
   const eyeMinH = scale * 2.5;
   const eyeH = lerp(eyeMinH, eyeMaxH, openness);
-  const eyeGap = scale * 18;
+  const eyeGap = scale * 22;  // Wider gap for bigger eyes
   const eyeY = cy - scale * 6 + bobY + driftY;
   const eyeX = cx + driftX + jitterX;
 
@@ -500,24 +543,6 @@ function draw() {
     
     ctx.fillRect(leftEyeX, eyeTop, Math.round(eyeW), Math.round(eyeH));
     ctx.fillRect(rightEyeX, eyeTop, Math.round(eyeW), Math.round(eyeH));
-    
-    // Eye shine (when eyes are open enough)
-    if (targetProfile.eyeShine && openness > 0.4) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      const shineSize = scale * 3;
-      const shineOffsetX = scale * 3;
-      const shineOffsetY = -scale * 2;
-      ctx.fillRect(
-        leftEyeX + shineOffsetX,
-        eyeTop + shineOffsetY + eyeH * 0.2,
-        shineSize, shineSize
-      );
-      ctx.fillRect(
-        rightEyeX + shineOffsetX,
-        eyeTop + shineOffsetY + eyeH * 0.2,
-        shineSize, shineSize
-      );
-    }
   }
 
   // ── Eyebrows ──
@@ -811,6 +836,15 @@ function setEmotion(newEmotion) {
     targetBpm = st.bpm[0] + Math.random() * (st.bpm[1] - st.bpm[0]);
     targetHype = st.hype[0] + Math.random() * (st.hype[1] - st.hype[0]);
     updateTitle();
+    
+    // Reset signal timer (for auto-return to idle)
+    lastSignalTime = Date.now();
+    
+    // Clear/start idle activities
+    if (idleActivityTimer) clearTimeout(idleActivityTimer);
+    if (resolved === 'idle') {
+      scheduleIdleActivity();
+    }
     
     // Burst particles on emotion change
     if (resolved === 'happy') {
