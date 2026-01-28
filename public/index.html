@@ -311,50 +311,14 @@ let targetHype = 10;
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 
-let mouseX = 0;
 let mouseY = 0;
 let isHoveringStats = false;
-let isHoveringSidebar = false;
-
-// ── Settings (persisted in localStorage) ────────────
-const defaultSettings = { showStats: true, showTask: true, showVibe: true };
-let settings = { ...defaultSettings };
-try {
-  const saved = localStorage.getItem('clawd-settings');
-  if (saved) settings = { ...defaultSettings, ...JSON.parse(saved) };
-} catch {}
-
-function saveSettings() {
-  localStorage.setItem('clawd-settings', JSON.stringify(settings));
-}
 
 canvas.addEventListener('mousemove', (e) => {
-  mouseX = e.clientX / window.innerWidth;
   mouseY = e.clientY / window.innerHeight;
   isHoveringStats = mouseY > 0.7;
-  isHoveringSidebar = mouseX > 0.85 && mouseY > 0.5;
 });
-canvas.addEventListener('mouseleave', () => {
-  isHoveringStats = false;
-  isHoveringSidebar = false;
-});
-canvas.addEventListener('click', (e) => {
-  const x = e.clientX / window.innerWidth;
-  const y = e.clientY / window.innerHeight;
-  
-  // Sidebar click detection
-  if (x > 0.85 && y > 0.5) {
-    const relY = (y - 0.5) / 0.5; // 0-1 within sidebar
-    if (relY < 0.33) {
-      settings.showStats = !settings.showStats;
-    } else if (relY < 0.66) {
-      settings.showVibe = !settings.showVibe;
-    } else {
-      settings.showTask = !settings.showTask;
-    }
-    saveSettings();
-  }
-});
+canvas.addEventListener('mouseleave', () => isHoveringStats = false);
 
 function resize() {
   canvas.width = window.innerWidth * devicePixelRatio;
@@ -737,69 +701,25 @@ function draw() {
   ctx.textAlign = 'center';
 
   // BPM & Hype (bigger!)
-  if (settings.showStats) {
-    ctx.font = `bold ${fontSize}px monospace`;
-    ctx.globalAlpha = baseAlpha;
-    const bpmStr = `♥ ${Math.round(displayBpm)} bpm`;
-    const hypeStr = `⚡ ${Math.round(displayHype)}%`;
-    const gap = scale * 28;
-    ctx.fillText(bpmStr, cx - gap, statsY);
-    ctx.fillText(hypeStr, cx + gap, statsY);
-  }
+  ctx.font = `bold ${fontSize}px monospace`;
+  ctx.globalAlpha = baseAlpha;
+  const bpmStr = `♥ ${Math.round(displayBpm)} bpm`;
+  const hypeStr = `⚡ ${Math.round(displayHype)}%`;
+  const gap = scale * 28;
+  ctx.fillText(bpmStr, cx - gap, statsY);
+  ctx.fillText(hypeStr, cx + gap, statsY);
 
   // Vibe status
   const st = STATS[emotion] || STATS.idle;
-  if (settings.showVibe) {
-    ctx.font = `${smallFont}px monospace`;
-    ctx.globalAlpha = baseAlpha * 0.9;
-    ctx.fillText(st.vibe, cx, statsY + fontSize * 1.4);
-  }
+  ctx.font = `${smallFont}px monospace`;
+  ctx.globalAlpha = baseAlpha * 0.9;
+  ctx.fillText(st.vibe, cx, statsY + fontSize * 1.4);
 
   // Task
-  if (settings.showTask) {
-    ctx.font = `${Math.round(smallFont * 0.9)}px monospace`;
-    ctx.globalAlpha = baseAlpha * 0.75;
-    const displayTask = task.length > 50 ? task.slice(0, 47) + '...' : task;
-    const taskY = settings.showVibe ? statsY + fontSize * 2.5 : statsY + fontSize * 1.4;
-    ctx.fillText(displayTask, cx, taskY);
-  }
-
-  // ── Settings Sidebar (on hover) ──
-  if (isHoveringSidebar || isHoveringStats) {
-    const sbW = W * 0.12;
-    const sbH = H * 0.35;
-    const sbX = W - sbW - 10;
-    const sbY = H * 0.55;
-    
-    // Sidebar background
-    ctx.globalAlpha = 0.85;
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.beginPath();
-    ctx.roundRect(sbX, sbY, sbW, sbH, 8);
-    ctx.fill();
-    
-    // Title
-    ctx.fillStyle = '#fff';
-    ctx.globalAlpha = 0.9;
-    ctx.font = `bold ${Math.round(scale * 2.5)}px monospace`;
-    ctx.textAlign = 'left';
-    ctx.fillText('⚙️ Settings', sbX + 10, sbY + 25);
-    
-    // Toggle items
-    ctx.font = `${Math.round(scale * 2)}px monospace`;
-    const items = [
-      { key: 'showStats', label: 'Stats (BPM/Hype)' },
-      { key: 'showVibe', label: 'Mood Status' },
-      { key: 'showTask', label: 'Task Text' },
-    ];
-    
-    items.forEach((item, i) => {
-      const y = sbY + 55 + i * 30;
-      const checked = settings[item.key];
-      ctx.globalAlpha = checked ? 0.95 : 0.5;
-      ctx.fillText(`${checked ? '☑' : '☐'} ${item.label}`, sbX + 10, y);
-    });
-  }
+  ctx.font = `${Math.round(smallFont * 0.9)}px monospace`;
+  ctx.globalAlpha = baseAlpha * 0.75;
+  const displayTask = task.length > 50 ? task.slice(0, 47) + '...' : task;
+  ctx.fillText(displayTask, cx, statsY + fontSize * 2.5);
 
   ctx.globalAlpha = 1;
   ctx.textAlign = 'start';
