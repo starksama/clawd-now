@@ -39,243 +39,152 @@ const ease = {
   },
 };
 
+// ── Theme Color (user configurable) ─────────────────
+const THEME_BG = '#E8937C';  // Single background - change this to customize
+
 // ── Emotion Profiles ────────────────────────────────
+// All states share same bg. Emotions via pixel art only (eyes, brows, mouth)
 const PROFILES = {
+  // 💤 SLEEPING - Eyes almost closed, zzz particles
   sleeping: {
-    bg: '#E8A090',
-    eyeOpen: 0.12,
-    mouthChance: 0.05,
+    eyeOpen: 0.08,
+    mouthChance: 0,
     mouthType: 'neutral',
-    bobSpeed: 0.008,
-    bobAmount: 1.5,
+    bobSpeed: 0.006,
+    bobAmount: 2,
     driftSpeed: 0.002,
     driftAmount: 1,
-    blinkRate: 0.005,
-    squintRate: 0.01,
-    eventDelay: [200, 400],
+    blinkRate: 0.01,
+    squintRate: 0,
+    eventDelay: [300, 500],
     showZzz: true,
     eyeShine: false,
     blush: 0,
     squash: 1.0,
+    eyebrows: 'none',
   },
+  // 😶 IDLE - Relaxed, neutral expression
   idle: {
-    bg: '#E8937C',
-    eyeOpen: 1.0,
-    mouthChance: 0.4,
-    mouthType: 'neutral',
-    bobSpeed: 0.015,
-    bobAmount: 2.5,
-    driftSpeed: 0.008,
-    driftAmount: 3,
-    blinkRate: 0.25,
-    squintRate: 0.15,
-    eventDelay: [80, 200],
-    showZzz: false,
-    eyeShine: true,
-    blush: 0,
-    squash: 1.0,
-  },
-  focused: {
-    bg: '#E08D76',
-    eyeOpen: 0.35,
-    mouthChance: 0.08,
-    mouthType: 'neutral',
-    bobSpeed: 0.025,
-    bobAmount: 1.2,
-    driftSpeed: 0.003,
-    driftAmount: 0.8,
-    blinkRate: 0.08,
-    squintRate: 0.03,
-    eventDelay: [200, 400],
-    showZzz: false,
-    eyeShine: true,
-    blush: 0,
-    squash: 1.0,
-  },
-  happy: {
-    bg: '#E89880',
     eyeOpen: 0.85,
-    mouthChance: 0.9,
-    mouthType: 'smile',
-    bobSpeed: 0.022,
-    bobAmount: 4,
-    driftSpeed: 0.012,
-    driftAmount: 4,
-    blinkRate: 0.3,
-    squintRate: 0.1,
-    eventDelay: [60, 150],
-    showZzz: false,
-    eyeShine: true,
-    blush: 0.4,
-    squash: 1.15,
-    showSparkles: true,
-  },
-  excited: {
-    bg: '#E58A70',
-    eyeOpen: 1.0,
-    mouthChance: 0.95,
-    mouthType: 'open',
-    bobSpeed: 0.035,
-    bobAmount: 6,
-    driftSpeed: 0.018,
-    driftAmount: 5,
-    blinkRate: 0.35,
-    squintRate: 0.05,
-    eventDelay: [40, 100],
-    showZzz: false,
-    eyeShine: true,
-    blush: 0.3,
-    squash: 1.25,
-    showSparkles: true,
-    screenShake: 0.3,
-  },
-  stressed: {
-    bg: '#E08870',
-    eyeOpen: 0.7,
     mouthChance: 0.15,
-    mouthType: 'worried',
-    bobSpeed: 0.02,
-    bobAmount: 1.5,
-    driftSpeed: 0.015,
-    driftAmount: 2,
-    blinkRate: 0.4,
-    squintRate: 0.2,
-    eventDelay: [50, 120],
-    showZzz: false,
-    jitter: true,
-    eyeShine: false,
-    blush: 0,
-    squash: 0.95,
-    showSweat: true,
-  },
-  tired: {
-    bg: '#E0A090',
-    eyeOpen: 0.4,
-    mouthChance: 0.2,
     mouthType: 'neutral',
-    bobSpeed: 0.01,
+    bobSpeed: 0.012,
     bobAmount: 2,
-    driftSpeed: 0.004,
+    driftSpeed: 0.006,
     driftAmount: 2,
-    blinkRate: 0.15,
-    squintRate: 0.3,
-    eventDelay: [120, 300],
-    showZzz: false,
-    eyeShine: false,
-    blush: 0,
-    squash: 0.9,
-  },
-  bored: {
-    bg: '#D8A090',
-    eyeOpen: 0.5,
-    mouthChance: 0.3,
-    mouthType: 'neutral',
-    bobSpeed: 0.006,
-    bobAmount: 1,
-    driftSpeed: 0.015,
-    driftAmount: 5,
     blinkRate: 0.2,
-    squintRate: 0.25,
+    squintRate: 0.1,
     eventDelay: [100, 250],
     showZzz: false,
-    eyeShine: false,
-    blush: 0,
-    squash: 1.0,
-  },
-  curious: {
-    bg: '#E89580',
-    eyeOpen: 1.0,
-    mouthChance: 0.5,
-    mouthType: 'small-o',
-    bobSpeed: 0.02,
-    bobAmount: 3,
-    driftSpeed: 0.02,
-    driftAmount: 6,
-    blinkRate: 0.3,
-    squintRate: 0.05,
-    eventDelay: [50, 120],
-    showZzz: false,
     eyeShine: true,
-    blush: 0.1,
-    squash: 1.05,
-  },
-  thinking: {
-    bg: '#D4A08E',
-    eyeOpen: 0.45,
-    mouthChance: 0.05,
-    mouthType: 'hmm',
-    bobSpeed: 0.012,
-    bobAmount: 1.8,
-    driftSpeed: 0.005,
-    driftAmount: 2,
-    blinkRate: 0.1,
-    squintRate: 0.2,
-    eventDelay: [150, 350],
-    showZzz: false,
-    eyeShine: false,
     blush: 0,
     squash: 1.0,
-    lookUp: true,
+    eyebrows: 'none',
   },
-  angry: {
-    bg: '#C85A5A',
-    eyeOpen: 0.3,
-    mouthChance: 0.7,
-    mouthType: 'grr',
-    bobSpeed: 0.04,
-    bobAmount: 3,
+  // 🔒 FOCUSED - Squinted eyes, furrowed brows, minimal movement
+  focused: {
+    eyeOpen: 0.25,
+    mouthChance: 0,
+    mouthType: 'neutral',
+    bobSpeed: 0.008,
+    bobAmount: 0.8,
     driftSpeed: 0.002,
     driftAmount: 0.5,
     blinkRate: 0.05,
-    squintRate: 0.4,
-    eventDelay: [30, 80],
+    squintRate: 0,
+    eventDelay: [250, 450],
+    showZzz: false,
+    eyeShine: false,
+    blush: 0,
+    squash: 0.95,
+    eyebrows: 'furrowed',
+  },
+  // 😊 HAPPY - Wide eyes, raised brows, smile, blush
+  happy: {
+    eyeOpen: 1.0,
+    mouthChance: 0.95,
+    mouthType: 'smile',
+    bobSpeed: 0.025,
+    bobAmount: 4,
+    driftSpeed: 0.015,
+    driftAmount: 3,
+    blinkRate: 0.25,
+    squintRate: 0.05,
+    eventDelay: [60, 140],
+    showZzz: false,
+    eyeShine: true,
+    blush: 0.5,
+    squash: 1.1,
+    eyebrows: 'raised',
+    showSparkles: true,
+  },
+  // 😰 STRESSED - Worried brows, sweat, jitter
+  stressed: {
+    eyeOpen: 0.6,
+    mouthChance: 0.4,
+    mouthType: 'worried',
+    bobSpeed: 0.015,
+    bobAmount: 1.5,
+    driftSpeed: 0.01,
+    driftAmount: 1,
+    blinkRate: 0.35,
+    squintRate: 0.15,
+    eventDelay: [60, 120],
     showZzz: false,
     jitter: true,
     eyeShine: false,
-    blush: 0.5,
-    squash: 0.9,
-    screenShake: 0.5,
-    showAngerMark: true,
+    blush: 0,
+    squash: 0.92,
+    eyebrows: 'worried',
+    showSweat: true,
   },
+  // 💬 TEXTING - Normal, attentive expression
   texting: {
-    bg: '#E0926E',
-    eyeOpen: 0.8,
-    mouthChance: 0.6,
+    eyeOpen: 0.75,
+    mouthChance: 0.2,
     mouthType: 'neutral',
-    bobSpeed: 0.03,
-    bobAmount: 2,
+    bobSpeed: 0.02,
+    bobAmount: 1.5,
     driftSpeed: 0.004,
     driftAmount: 1,
-    blinkRate: 0.25,
-    squintRate: 0.08,
-    eventDelay: [40, 100],
+    blinkRate: 0.2,
+    squintRate: 0.05,
+    eventDelay: [80, 180],
     showZzz: false,
     eyeShine: true,
     blush: 0,
     squash: 1.0,
+    eyebrows: 'none',
   },
-  inlove: {
-    bg: '#E8889C',
-    eyeOpen: 1.0,
-    mouthChance: 0.85,
-    mouthType: 'smile',
-    bobSpeed: 0.018,
-    bobAmount: 3.5,
-    driftSpeed: 0.006,
+  // ☕ CHILLING - Relaxed happy, enjoying life
+  chilling: {
+    eyeOpen: 0.7,
+    mouthChance: 0.8,
+    mouthType: 'content',
+    bobSpeed: 0.008,
+    bobAmount: 1.5,
+    driftSpeed: 0.004,
     driftAmount: 2,
-    blinkRate: 0.12,
-    squintRate: 0.03,
-    eventDelay: [80, 200],
+    blinkRate: 0.15,
+    squintRate: 0.2,
+    eventDelay: [150, 300],
     showZzz: false,
-    showHearts: true,
-    heartEyes: true,
-    eyeShine: false,
-    blush: 0.7,
-    squash: 1.1,
+    eyeShine: true,
+    blush: 0.2,
+    squash: 1.0,
+    eyebrows: 'none',
   },
+  // Legacy aliases - map to core states
+  excited: null,  // → happy
+  tired: null,    // → sleeping
+  bored: null,    // → idle
+  curious: null,  // → idle
+  thinking: null, // → focused
+  angry: null,    // → stressed
+  inlove: null,   // → happy
 };
 
-const EYE_COLOR = '#3D2817';
+const EYE_COLOR = '#3D2817';  // Dark brown for pixel art face
 const HEART_COLOR = '#CC2244';
 const BLUSH_COLOR = 'rgba(255, 120, 140, ';
 const SPARKLE_COLOR = '#FFE066';
@@ -325,22 +234,31 @@ let shakeY = 0;
 let currentBlush = 0;
 let targetBlush = 0;
 
-// ── Stats ────────────────────────────────────────────
+// ── Stats (7 core states) ────────────────────────────
 const STATS = {
   sleeping:  { bpm: [45, 55],  hype: [5, 15],   vibe: '💤 zzz...' },
-  idle:      { bpm: [60, 70],  hype: [20, 40],  vibe: '😶 vibing' },
-  focused:   { bpm: [72, 82],  hype: [50, 70],  vibe: '🔒 locked in' },
-  happy:     { bpm: [75, 85],  hype: [60, 80],  vibe: '😊 feeling good' },
-  excited:   { bpm: [95, 120], hype: [85, 100], vibe: '🚀 LFG!!' },
-  stressed:  { bpm: [88, 105], hype: [30, 50],  vibe: '😰 sweating' },
-  tired:     { bpm: [50, 60],  hype: [10, 25],  vibe: '🥱 need coffee' },
-  bored:     { bpm: [55, 65],  hype: [5, 20],   vibe: '😑 meh...' },
-  curious:   { bpm: [70, 85],  hype: [55, 75],  vibe: '👀 interesting...' },
-  angry:     { bpm: [100, 130], hype: [70, 95],  vibe: '😤 don\'t test me' },
-  thinking:  { bpm: [65, 78],  hype: [40, 60],  vibe: '🧠 processing...' },
-  texting:   { bpm: [72, 85],  hype: [45, 65],  vibe: '💬 typing...' },
-  inlove:    { bpm: [90, 115], hype: [80, 100], vibe: '😍 in love!!' },
+  idle:      { bpm: [60, 70],  hype: [25, 45],  vibe: '😶 vibing' },
+  focused:   { bpm: [70, 80],  hype: [60, 80],  vibe: '🔒 locked in' },
+  happy:     { bpm: [80, 95],  hype: [75, 95],  vibe: '😊 feeling good' },
+  stressed:  { bpm: [95, 115], hype: [40, 60],  vibe: '😰 sweating' },
+  texting:   { bpm: [68, 78],  hype: [50, 70],  vibe: '💬 typing...' },
+  chilling:  { bpm: [55, 65],  hype: [30, 50],  vibe: '☕ enjoying life' },
 };
+
+// ── Alias Resolution ─────────────────────────────────
+const EMOTION_ALIASES = {
+  excited: 'happy',
+  tired: 'sleeping',
+  bored: 'idle',
+  curious: 'idle',
+  thinking: 'focused',
+  angry: 'stressed',
+  inlove: 'happy',
+};
+
+function resolveEmotion(name) {
+  return EMOTION_ALIASES[name] || name;
+}
 let displayBpm = 50;
 let displayHype = 10;
 let targetBpm = 50;
@@ -489,8 +407,8 @@ function draw() {
 
   const p = currentProfile;
 
-  // Background
-  ctx.fillStyle = targetProfile.bg;
+  // Background (single theme color)
+  ctx.fillStyle = THEME_BG;
   ctx.fillRect(0, 0, W, H);
 
   // Bob with squash/stretch
@@ -544,6 +462,11 @@ function draw() {
   const eyeY = cy - scale * 6 + bobY + driftY;
   const eyeX = cx + driftX + jitterX;
 
+  // Eye positions (needed for both eyes and eyebrows)
+  const leftEyeX = Math.round(eyeX - eyeGap - eyeW / 2);
+  const rightEyeX = Math.round(eyeX + eyeGap - eyeW / 2);
+  const eyeTop = Math.round(eyeY - eyeH / 2 + jitterY);
+
   if (targetProfile.heartEyes && openness > 0.15) {
     // Heart Eyes
     const heartScale = openness;
@@ -572,10 +495,8 @@ function draw() {
     }
   } else {
     // Normal eyes
-    ctx.fillStyle = EYE_COLOR;
-    const leftEyeX = Math.round(eyeX - eyeGap - eyeW / 2);
-    const rightEyeX = Math.round(eyeX + eyeGap - eyeW / 2);
-    const eyeTop = Math.round(eyeY - eyeH / 2 + jitterY);
+    const eyeColor = EYE_COLOR;
+    ctx.fillStyle = eyeColor;
     
     ctx.fillRect(leftEyeX, eyeTop, Math.round(eyeW), Math.round(eyeH));
     ctx.fillRect(rightEyeX, eyeTop, Math.round(eyeW), Math.round(eyeH));
@@ -596,6 +517,49 @@ function draw() {
         eyeTop + shineOffsetY + eyeH * 0.2,
         shineSize, shineSize
       );
+    }
+  }
+
+  // ── Eyebrows ──
+  const browType = targetProfile.eyebrows || 'none';
+  if (browType !== 'none') {
+    const eyeColor = EYE_COLOR;
+    ctx.fillStyle = eyeColor;
+    const browW = scale * 10;
+    const browH = scale * 2.5;
+    const browY = eyeTop - scale * 6;
+    
+    if (browType === 'raised') {
+      // Happy/surprised - raised brows (horizontal, higher)
+      const raisedY = browY - scale * 2;
+      ctx.fillRect(Math.round(leftEyeX - scale), Math.round(raisedY), Math.round(browW), Math.round(browH));
+      ctx.fillRect(Math.round(rightEyeX - scale), Math.round(raisedY), Math.round(browW), Math.round(browH));
+    } else if (browType === 'furrowed') {
+      // Focused/angry - angled inward ╱ ╲
+      ctx.save();
+      // Left brow - angled down toward center
+      ctx.translate(leftEyeX + eyeW/2, browY);
+      ctx.rotate(0.25);
+      ctx.fillRect(-browW/2, -browH/2, browW, browH);
+      ctx.restore();
+      ctx.save();
+      // Right brow - angled down toward center  
+      ctx.translate(rightEyeX + eyeW/2, browY);
+      ctx.rotate(-0.25);
+      ctx.fillRect(-browW/2, -browH/2, browW, browH);
+      ctx.restore();
+    } else if (browType === 'worried') {
+      // Stressed - angled outward (reverse of furrowed) ╲ ╱
+      ctx.save();
+      ctx.translate(leftEyeX + eyeW/2, browY);
+      ctx.rotate(-0.3);
+      ctx.fillRect(-browW/2, -browH/2, browW, browH);
+      ctx.restore();
+      ctx.save();
+      ctx.translate(rightEyeX + eyeW/2, browY);
+      ctx.rotate(0.3);
+      ctx.fillRect(-browW/2, -browH/2, browW, browH);
+      ctx.restore();
     }
   }
 
@@ -638,6 +602,14 @@ function draw() {
       ctx.quadraticCurveTo(mouthX - scale * 2, mouthY + scale * 2, mouthX, mouthY);
       ctx.quadraticCurveTo(mouthX + scale * 2, mouthY - scale * 2, mouthX + scale * 4, mouthY);
       ctx.lineWidth = scale * 1.5;
+      ctx.strokeStyle = EYE_COLOR;
+      ctx.stroke();
+    } else if (currentMouthType === 'content') {
+      // Relaxed gentle smile - like :3 or soft curve
+      const mouthW = scale * 6;
+      ctx.beginPath();
+      ctx.arc(mouthX, mouthY, mouthW/2, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.lineWidth = scale * 1.8;
       ctx.strokeStyle = EYE_COLOR;
       ctx.stroke();
     } else if (currentMouthType === 'grr') {
@@ -817,35 +789,33 @@ loop();
 
 // ── Tab Title ────────────────────────────────────────
 function updateTitle() {
-  const st = STATS[emotion] || STATS.idle;
+  const resolved = resolveEmotion(emotion);
+  const st = STATS[resolved] || STATS.idle;
   const vibe = st.vibe.replace(/^[\p{Emoji}\uFE0F\u200D]+\s*/u, '');
   document.title = `clawd: ${vibe}`;
 }
 
 // ── Emotion Change ──────────────────────────────────
 function setEmotion(newEmotion) {
-  if (PROFILES[newEmotion]) {
-    emotion = newEmotion;
-    targetProfile = PROFILES[newEmotion];
+  // Resolve aliases to core emotions
+  const resolved = resolveEmotion(newEmotion);
+  
+  if (PROFILES[resolved]) {
+    emotion = resolved;
+    targetProfile = PROFILES[resolved];
     targetOpenness = targetProfile.eyeOpen;
     targetMouth = Math.random() < targetProfile.mouthChance ? 1 : 0;
     currentMouthType = targetProfile.mouthType || 'neutral';
     
-    const st = STATS[newEmotion] || STATS.idle;
+    const st = STATS[resolved] || STATS.idle;
     targetBpm = st.bpm[0] + Math.random() * (st.bpm[1] - st.bpm[0]);
     targetHype = st.hype[0] + Math.random() * (st.hype[1] - st.hype[0]);
     updateTitle();
     
     // Burst particles on emotion change
-    if (newEmotion === 'happy' || newEmotion === 'excited') {
+    if (resolved === 'happy') {
       for (let i = 0; i < 5; i++) {
         setTimeout(() => spawnParticle('sparkle', (Math.random() - 0.5) * 50, -15 - Math.random() * 15), i * 50);
-      }
-    }
-    if (newEmotion === 'inlove') {
-      for (let i = 0; i < 4; i++) {
-        const side = i % 2 === 0 ? -1 : 1;
-        setTimeout(() => spawnParticle('heart', side * (20 + Math.random() * 15), -10), i * 80);
       }
     }
   }
